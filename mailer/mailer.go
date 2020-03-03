@@ -1,7 +1,6 @@
 package mailer
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/boreevyuri/postmanq/common"
@@ -35,7 +34,8 @@ func (m *Mailer) sendMail(event *common.SendEvent) {
 		m.prepare(message)
 		m.send(event)
 	} else {
-		common.ReturnMail(event, errors.New(fmt.Sprintf("511 service#%d can't send mail#%d, envelope or ricipient is invalid", m.id, message.ID)))
+		// common.ReturnMail(event, errors.New(fmt.Sprintf("511 service#%d can't send mail#%d, envelope or ricipient is invalid", m.id, message.ID)))
+		common.ReturnMail(event, fmt.Errorf("511 service#%d can't send mail#%d, envelope or ricipient is invalid", m.id, message.ID))
 	}
 }
 

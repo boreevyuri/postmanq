@@ -19,7 +19,7 @@ var (
 	events = make(chan *common.SendEvent)
 )
 
-// сервис получения сообщений
+// Service сервис получения сообщений
 type Service struct {
 	// настройка получателей сообщений
 	Configs []*Config `yaml:"consumers"`
@@ -31,7 +31,7 @@ type Service struct {
 	consumers map[string][]*Consumer
 }
 
-// создает новый сервис получения сообщений
+// Inst создает новый сервис получения сообщений
 func Inst() common.SendingService {
 	if service == nil {
 		service := new(Service)
@@ -42,7 +42,7 @@ func Inst() common.SendingService {
 	return service
 }
 
-// инициализирует сервис
+// OnInit инициализирует сервис
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	logger.Debug("init consumer service")
 	// получаем настройки
@@ -124,7 +124,7 @@ func (s *Service) notifyCloseError(config *Config, closeErrors chan *amqp.Error)
 	}
 }
 
-// запускает сервис
+// OnRun запускает сервис
 func (s *Service) OnRun() {
 	logger.Debug("run consumers...")
 	for _, apps := range s.consumers {
@@ -139,7 +139,7 @@ func (s *Service) runConsumers(apps []*Consumer) {
 	}
 }
 
-// останавливает получателей
+// OnFinish останавливает получателей
 func (s *Service) OnFinish() {
 	logger.Debug("stop consumers...")
 	for _, connect := range s.connections {
@@ -153,12 +153,12 @@ func (s *Service) OnFinish() {
 	close(events)
 }
 
-// канал для приема событий отправки писем
+// Events канал для приема событий отправки писем
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// запускает получение сообщений с ошибками и пересылает их другому сервису
+// OnShowReport запускает получение сообщений с ошибками и пересылает их другому сервису
 func (s *Service) OnShowReport() {
 	waiter := newWaiter()
 	group := new(sync.WaitGroup)
@@ -186,15 +186,15 @@ func (s *Service) OnShowReport() {
 	sendEvent.Iterator.Next().(common.ReportService).Events() <- sendEvent
 }
 
-// перекладывает сообщения из очереди в очередь
+// OnPublish перекладывает сообщения из очереди в очередь
 func (s *Service) OnPublish(event *common.ApplicationEvent) {
 	group := new(sync.WaitGroup)
 	delta := 0
 	for uri, apps := range s.consumers {
 		var necessaryPublish bool
 		if len(event.GetStringArg("host")) > 0 {
-			parsedUri, err := url.Parse(uri)
-			if err == nil && parsedUri.Host == event.GetStringArg("host") {
+			parsedURI, err := url.Parse(uri)
+			if err == nil && parsedURI.Host == event.GetStringArg("host") {
 				necessaryPublish = true
 			} else {
 				necessaryPublish = false
@@ -217,7 +217,7 @@ func (s *Service) OnPublish(event *common.ApplicationEvent) {
 	common.App.Events() <- common.NewApplicationEvent(common.FinishApplicationEventKind)
 }
 
-// получатель сообщений из очереди
+// Config получатель сообщений из очереди
 type Config struct {
 	URI      string     `yaml:"uri"`
 	Bindings []*Binding `yaml:"bindings"`

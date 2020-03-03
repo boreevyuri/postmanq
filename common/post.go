@@ -92,7 +92,7 @@ const (
 
 // MailError ошибка во время отпрвки письма
 type MailError struct {
-	// сообщение
+	// сообщение об ошибке
 	Message string `json:"message"`
 
 	// код ошибки

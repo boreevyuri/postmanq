@@ -19,7 +19,7 @@ var (
 	events = make(chan *common.SendEvent)
 )
 
-// сервис ограничений, следит за тем, чтобы почтовым сервисам не отправилось больше писем, чем нужно
+// Service сервис ограничений, следит за тем, чтобы почтовым сервисам не отправилось больше писем, чем нужно
 type Service struct {
 	// количество горутин проверяющих количество отправленных писем
 	LimitersCount int `yaml:"workers"`
@@ -28,7 +28,7 @@ type Service struct {
 	Limits map[string]*Limit `yaml:"limits"`
 }
 
-// создает сервис ограничений
+// Inst создает сервис ограничений
 func Inst() common.SendingService {
 	if service == nil {
 		service = new(Service)
@@ -38,7 +38,7 @@ func Inst() common.SendingService {
 	return service
 }
 
-// инициализирует сервис
+// OnInit инициализирует сервис
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	logger.Debug("init limits...")
 	err := yaml.Unmarshal(event.Data, s)
@@ -56,7 +56,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// запускает проверку ограничений и очистку значений лимитов
+// OnRun запускает проверку ограничений и очистку значений лимитов
 func (s *Service) OnRun() {
 	// сразу запускаем проверку значений ограничений
 	go newCleaner()
@@ -65,12 +65,12 @@ func (s *Service) OnRun() {
 	}
 }
 
-// канал для приема событий отправки писем
+// Events канал для приема событий отправки писем
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// завершает работу сервиса соединений
+// OnFinish завершает работу сервиса соединений
 func (s *Service) OnFinish() {
 	close(events)
 }

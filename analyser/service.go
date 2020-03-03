@@ -59,7 +59,7 @@ var (
 	})
 )
 
-// сервис получает и анализирует неотправленные письма
+// Service сервис получает и анализирует неотправленные письма
 type Service struct {
 	// семафор
 	mutex *sync.Mutex
@@ -71,19 +71,19 @@ type Service struct {
 	reports RowWriters
 }
 
-// возвращает объект сервиса
+// Inst возвращает объект сервиса
 func Inst() *Service {
 	return service
 }
 
-// инициализирует сервис
+// OnInit инициализирует сервис
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	s.events = make(chan *common.SendEvent)
 	s.reports = make(RowWriters)
 	s.mutex = new(sync.Mutex)
 }
 
-// запускает получение событий и данных от пользователя
+// OnShowReport запускает получение событий и данных от пользователя
 func (s *Service) OnShowReport() {
 	for i := 0; i < common.DefaultWorkersCount; i++ {
 		go s.receiveMessages()
@@ -94,7 +94,7 @@ func (s *Service) OnShowReport() {
 	}
 }
 
-// слушает канал получения событий
+// receiveMessages слушает канал получения событий
 func (s *Service) receiveMessages() {
 	for event := range s.events {
 		s.receiveMessage(event)
@@ -240,7 +240,7 @@ func (s *Service) printUsage(flagSet *flag.FlagSet) {
 	fmt.Println("  -c * -l 100 -o 200  show reports with limit and offset")
 }
 
-// возвращает канал для отправки событий
+// Events возвращает канал для отправки событий
 func (s *Service) Events() chan *common.SendEvent {
 	return s.events
 }

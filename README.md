@@ -82,7 +82,7 @@ MX запись должна указывать на FQDN почты.
     selector._domainkey.example.com. 3600 IN TXT "k=rsa\; t=s\; p=содержимое public.key" 
     example.com.                     IN TXT      "v=spf1 +a +mx ~all"
           
-Selector-ом может быть любым словом на латинице. Значение selector-а необходимо указать в настройках PostmanQ в поле dkimSelector.
+Selector может быть любым словом на латинице. Значение selector необходимо указать в настройках PostmanQ в поле dkimSelector.
 
 Если PTR запись отсутствует, то письма могут попадать в спам, либо почтовые сервисы могут отклонять отправку.
 
@@ -147,5 +147,5 @@ curl -o /path/to/config.yaml https://raw.githubusercontent.com/boreevyuri/postma
 И запускаем, прокинув конфиг:
 
 ```bash
-docker run -v `/path/to/config.yaml`:`/etc/postmaq.yaml` -d --restart unless-stopped --name postmanq boreevyuri/postmanq:latest  
+docker run -v `/path/to/config.yaml`:`/etc/postmanq.yaml` -d --restart unless-stopped --name postmanq boreevyuri/postmanq:latest  
 ```  

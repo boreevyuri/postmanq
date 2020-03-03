@@ -7,19 +7,19 @@ import (
 	"github.com/boreevyuri/postmanq/logger"
 )
 
-// ограничитель, проверяет количество отправленных писем почтовому сервису
+// Limiter ограничитель, проверяет количество отправленных писем почтовому сервису
 type Limiter struct {
 	// идентификатор для логов
 	id int
 }
 
-// создает нового ограничителя
+// newLimiter создает нового ограничителя
 func newLimiter(id int) {
 	limiter := &Limiter{id}
 	limiter.run()
 }
 
-// запускает ограничителя
+// run запускает ограничителя
 func (l *Limiter) run() {
 	for event := range events {
 		l.check(event)
@@ -29,10 +29,10 @@ func (l *Limiter) run() {
 // проверяет количество отправленных писем почтовому сервису
 // если количество превышено, отправляет письмо в отложенную очередь
 func (l *Limiter) check(event *common.SendEvent) {
-	logger.Info("limiter#%d-%d check limit for mail", l.id, event.Message.ID)
+	logger.Info("limiter#%d-%d limit check for %s", l.id, event.Message.ID, event.Message.HostnameTo)
 	// пытаемся найти ограничения для почтового сервиса
 	if limit, ok := service.Limits[event.Message.HostnameTo]; ok {
-		logger.Debug("limiter#%d-%d found limit for %s", l.id, event.Message.ID, event.Message.HostnameTo)
+		logger.Info("limiter#%d-%d limit FOUND for %s", l.id, event.Message.ID, event.Message.HostnameTo)
 		// если оно нашлось, проверяем, что отправка нового письма происходит в тот промежуток времени,
 		// в который нам необходимо следить за ограничениями
 		if limit.isValidDuration(event.Message.CreatedDate) {
@@ -53,7 +53,7 @@ func (l *Limiter) check(event *common.SendEvent) {
 			logger.Debug("limiter#%d-%d duration great then %v", l.id, event.Message.ID, limit.duration)
 		}
 	} else {
-		logger.Debug("limiter#%d-%d not found limit for %s", l.id, event.Message.ID, event.Message.HostnameTo)
+		logger.Info("limiter#%d-%d limit not found for %s", l.id, event.Message.ID, event.Message.HostnameTo)
 	}
 	event.Iterator.Next().(common.SendingService).Events() <- event
 }

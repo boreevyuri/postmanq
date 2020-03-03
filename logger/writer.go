@@ -9,25 +9,25 @@ import (
 	"github.com/boreevyuri/postmanq/common"
 )
 
-// автор логов
+// Writer автор логов
 type Writer interface {
 	writeString(string)
 }
 
-// автор логов пишущий в стандартный вывод
+// StdoutWriter автор логов пишущий в стандартный вывод
 type StdoutWriter struct{}
 
-// пишет логи в стандартный вывод
+// writeString пишет логи в стандартный вывод
 func (this *StdoutWriter) writeString(str string) {
 	os.Stdout.WriteString(str)
 }
 
-// автор логов пишущий в файл
+// FileWriter автор логов пишущий в файл
 type FileWriter struct {
 	filename string
 }
 
-// пишет логи в файл
+// writeString пишет логи в файл
 func (this *FileWriter) writeString(str string) {
 	f, err := os.OpenFile(this.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err == nil {
@@ -36,15 +36,15 @@ func (this *FileWriter) writeString(str string) {
 	}
 }
 
-// авторы логов
+// Writers писатели логов
 type Writers []Writer
 
-// количество авторов
+// количество писателей
 func (w Writers) len() int {
 	return len(w)
 }
 
-// инициализирует авторов логов
+// init инициализирует писателей логов
 func (w *Writers) init() {
 	for i := 0; i < w.len(); i++ {
 		if common.FilenameRegex.MatchString(service.Output) { // проверяем получили ли из настроек имя файла
@@ -62,32 +62,32 @@ func (w *Writers) init() {
 	}
 }
 
-// добавляет автора в список
+// set добавляет писателя в список
 func (w *Writers) set(i int, writer Writer) {
 	(*w)[i] = writer
 }
 
-// запускает авторов
+// write запускает писателей
 func (w Writers) write() {
 	for _, writer := range w {
 		go w.listenMessages(writer)
 	}
 }
 
-// подписывает авторов на получение сообщений для логирования
+// listenMessages подписывает писателей на получение сообщений для логирования
 func (w *Writers) listenMessages(writer Writer) {
 	for message := range messages {
 		w.writeMessage(writer, message)
 	}
 }
 
-// пишет сообщение в лог
+// writeMessage пишет сообщение в лог
 func (w *Writers) writeMessage(writer Writer, message *Message) {
 	writer.writeString(
 		fmt.Sprintf(
 			"PostmanQ | %v | %s: %s\n",
 			time.Now().Format("2006-01-02 15:04:05"),
-			logLevelById[message.Level],
+			logLevelByID[message.Level],
 			fmt.Sprintf(message.Message, message.Args...),
 		),
 	)

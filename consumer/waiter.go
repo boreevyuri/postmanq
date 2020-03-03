@@ -5,19 +5,19 @@ import (
 	"time"
 )
 
-// ожидающий
+// Waiter - ждун
 type Waiter struct {
 	*time.Ticker
 }
 
-// создает нового ожидающего
+// newWaiter - создает нового ждуна
 func newWaiter() *Waiter {
 	waiter := &Waiter{time.NewTicker(time.Millisecond * 250)}
 	go waiter.run()
 	return waiter
 }
 
-// запускает нового ожидающего
+// запускает нового ждуна
 func (w *Waiter) run() {
 	commas := []string{
 		".  ",

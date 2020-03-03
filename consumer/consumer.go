@@ -20,7 +20,7 @@ var (
 	}
 )
 
-// получатель сообщений из очереди
+// Consumer получатель сообщений из очереди
 type Consumer struct {
 	id         int
 	connect    *amqp.Connection
@@ -28,7 +28,7 @@ type Consumer struct {
 	deliveries <-chan amqp.Delivery
 }
 
-// создает нового получателя
+// NewConsumer создает нового получателя
 func NewConsumer(id int, connect *amqp.Connection, binding *Binding) *Consumer {
 	app := new(Consumer)
 	app.id = id
@@ -127,6 +127,7 @@ func (c *Consumer) handleErrorSend(channel *amqp.Channel, message *common.MailMe
 	// если ошибка связана с невозможностью отправить письмо адресату
 	// перекладываем письмо в очередь для плохих писем
 	// и пусть отправители сами с ними разбираются
+	// TODO: Разобраться с iCloud и его 450 при OverQuota
 	if message.Error.Code >= 500 && message.Error.Code < 600 {
 		failureBinding = c.binding.failureBindings[errorSignsMap.BindingType(message)]
 	} else if message.Error.Code == 450 || message.Error.Code == 451 { // мы точно попали в серый список, надо повторить отправку письма попозже
@@ -153,7 +154,7 @@ func (c *Consumer) handleErrorSend(channel *amqp.Channel, message *common.MailMe
 			},
 		)
 		if err == nil {
-			logger.Debug(
+			logger.Info(
 				"consumer#%d-%d publish failure mail to queue %s, message: %s, code: %d",
 				c.id,
 				message.ID,
@@ -162,7 +163,7 @@ func (c *Consumer) handleErrorSend(channel *amqp.Channel, message *common.MailMe
 				message.Error.Code,
 			)
 		} else {
-			logger.Warn(
+			logger.Info(
 				"consumer#%d-%d can't publish failure mail to queue %s, message: %s, code: %d, publish error% %v",
 				c.id,
 				message.ID,

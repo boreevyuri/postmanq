@@ -1,12 +1,13 @@
 package analyser
 
 import (
-	"github.com/byorty/clitable"
 	"regexp"
 	"time"
+
+	"github.com/byorty/clitable"
 )
 
-// отчет об ошибке
+// Report отчет об ошибке
 type Report struct {
 	// идентификатор
 	Id int
@@ -44,7 +45,7 @@ func (r Report) Write(table *clitable.Table, valueRegex *regexp.Regexp) {
 	}
 }
 
-// агрегированная строка
+// AggregateRow агрегированная строка
 type AggregateRow []int
 
 // записывает строку в таблицу

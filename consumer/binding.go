@@ -9,29 +9,32 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// тип точки обмена
+// ExchangeType тип точки обмена
 type ExchangeType string
 
 const (
+	// DirectExchangeType - тип direct
 	DirectExchangeType ExchangeType = "direct"
-	FanoutExchangeType              = "fanout"
-	TopicExchangeType               = "topic"
+	// FanoutExchangeType - тип fanout
+	FanoutExchangeType = "fanout"
+	// TopicExchangeType - тип topic
+	TopicExchangeType = "topic"
 )
 
-// тип точки обмена для неотправленного письма
+// FailureBindingType тип точки обмена для неотправленного письма
 type FailureBindingType int
 
 const (
-	// проблемы с адресатом
+	// RecipientFailureBindingType проблемы с адресатом
 	RecipientFailureBindingType FailureBindingType = iota
 
-	// технические проблемы: неверная последовательность команд, косяки с dns
+	// TechnicalFailureBindingType технические проблемы: неверная последовательность команд, косяки с dns
 	TechnicalFailureBindingType
 
-	// проблемы с подключеним к почтовому сервису
+	// ConnectionFailureBindingType проблемы с подключеним к почтовому сервису
 	ConnectionFailureBindingType
 
-	// неизвестная проблема
+	// UnknownFailureBindingType неизвестная проблема
 	UnknownFailureBindingType
 )
 
@@ -89,7 +92,7 @@ var (
 	}
 )
 
-// связка точки обмена и очереди
+// Binding связка точки обмена и очереди
 type Binding struct {
 	// имя точки обмена и очереди
 	Name string `yaml:"name"`

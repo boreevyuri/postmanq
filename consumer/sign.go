@@ -8,6 +8,7 @@ import (
 
 var (
 	// карта признаков ошибок, используется для распределения неотправленных сообщений по очередям для ошибок
+	// TODO: Рассмотреть ошибки, добавить свои, указать особенности
 	errorSignsMap = ErrorSignsMap{
 		501: ErrorSigns{
 			ErrorSign{RecipientFailureBindingType, []string{
@@ -172,22 +173,21 @@ var (
 	}
 )
 
-// карта признаков ошибок, в качестве ключа используется код ошибки, полученной от почтового сервиса
+// ErrorSignsMap карта признаков ошибок, в качестве ключа используется код ошибки, полученной от почтового сервиса
 type ErrorSignsMap map[int]ErrorSigns
 
-// отдает идентификатор очереди, в которую необходимо положить письмо с ошибкой
+// BindingType отдает идентификатор очереди, в которую необходимо положить письмо с ошибкой
 func (e ErrorSignsMap) BindingType(message *common.MailMessage) FailureBindingType {
 	if signs, ok := e[message.Error.Code]; ok {
 		return signs.BindingType(message)
-	} else {
-		return UnknownFailureBindingType
 	}
+	return UnknownFailureBindingType
 }
 
-// признаки ошибок
+// ErrorSigns признаки ошибок
 type ErrorSigns []ErrorSign
 
-// отдает идентификатор очереди, в которую необходимо положить письмо с ошибкой
+// BindingType отдает идентификатор очереди, в которую необходимо положить письмо с ошибкой
 func (e ErrorSigns) BindingType(message *common.MailMessage) FailureBindingType {
 	bindingType := UnknownFailureBindingType
 	for _, sign := range e {
@@ -199,7 +199,7 @@ func (e ErrorSigns) BindingType(message *common.MailMessage) FailureBindingType 
 	return bindingType
 }
 
-// признак ошибки
+// ErrorSign признак ошибки
 type ErrorSign struct {
 	// идентификатор очереди
 	bindingType FailureBindingType

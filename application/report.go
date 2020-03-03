@@ -6,17 +6,17 @@ import (
 	"github.com/boreevyuri/postmanq/consumer"
 )
 
-// приложение, анализирующее неотправленные сообщения
+// Report приложение, анализирующее неотправленные сообщения
 type Report struct {
 	Abstract
 }
 
-// создает новое приложение
+// NewReport создает новое приложение
 func NewReport() common.Application {
 	return new(Report)
 }
 
-// запускает приложение
+// Run запускает приложение
 func (r *Report) Run() {
 	common.App = r
 	common.Services = []interface{}{
@@ -29,7 +29,7 @@ func (r *Report) Run() {
 	r.run(r, common.NewApplicationEvent(common.InitApplicationEventKind))
 }
 
-// запускает сервисы приложения
+// FireRun запускает сервисы приложения
 func (r *Report) FireRun(event *common.ApplicationEvent, abstractService interface{}) {
 	service := abstractService.(common.ReportService)
 	go service.OnShowReport()

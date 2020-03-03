@@ -18,10 +18,10 @@ var (
 	service *Service
 
 	// регулярное выражение, по которому находим начало отправки
-	mailIdRegex = regexp.MustCompile(`mail#((\d)+)+`)
+	mailIDRegex = regexp.MustCompile(`mail#((\d)+)+`)
 )
 
-// сервис ищущий сообщения в логе об отправке письма
+// Service сервис ищущий сообщения в логе об отправке письма
 type Service struct {
 	// путь до файла с логами
 	Output string `yaml:"logOutput"`
@@ -30,7 +30,7 @@ type Service struct {
 	logFile *os.File
 }
 
-// создает новый сервис поиска по логам
+// Inst создает новый сервис поиска по логам
 func Inst() common.GrepService {
 	if service == nil {
 		service = new(Service)
@@ -38,7 +38,7 @@ func Inst() common.GrepService {
 	return service
 }
 
-// инициализирует сервис
+// OnInit инициализирует сервис
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	var err error
 	err = yaml.Unmarshal(event.Data, s)
@@ -59,7 +59,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// ищет логи об отправке письма
+// OnGrep ищет логи об отправке письма
 func (s *Service) OnGrep(event *common.ApplicationEvent) {
 	scanner := bufio.NewScanner(s.logFile)
 	scanner.Split(bufio.ScanLines)
@@ -82,25 +82,25 @@ func (s *Service) OnGrep(event *common.ApplicationEvent) {
 
 	go func() {
 		var successExpr, failExpr, failPubExpr, delayExpr, limitExpr string
-		var mailId string
+		var mailID string
 		for line := range lines {
-			if mailId == "" {
+			if mailID == "" {
 				if strings.Contains(line, expr) {
-					results := mailIdRegex.FindStringSubmatch(line)
+					results := mailIDRegex.FindStringSubmatch(line)
 					if len(results) == 3 {
-						mailId = results[1]
+						mailID = results[1]
 
-						successExpr = fmt.Sprintf("%s success send", mailId)
-						failExpr = fmt.Sprintf("%s publish failure mail to queue", mailId)
-						failPubExpr = fmt.Sprintf("%s can't publish failure mail to queue", mailId)
-						delayExpr = fmt.Sprintf("%s detect old dlx queue", mailId)
-						limitExpr = fmt.Sprintf("%s detect overlimit", mailId)
+						successExpr = fmt.Sprintf("%s success send", mailID)
+						failExpr = fmt.Sprintf("%s publish failure mail to queue", mailID)
+						failPubExpr = fmt.Sprintf("%s can't publish failure mail to queue", mailID)
+						delayExpr = fmt.Sprintf("%s detect old dlx queue", mailID)
+						limitExpr = fmt.Sprintf("%s detect overlimit", mailID)
 
 						outs <- line
 					}
 				}
 			} else {
-				if strings.Contains(line, mailId) {
+				if strings.Contains(line, mailID) {
 					outs <- line
 				}
 				if strings.Contains(line, successExpr) ||
@@ -108,7 +108,7 @@ func (s *Service) OnGrep(event *common.ApplicationEvent) {
 					strings.Contains(line, failPubExpr) ||
 					strings.Contains(line, delayExpr) ||
 					strings.Contains(line, limitExpr) {
-					mailId = ""
+					mailID = ""
 				}
 			}
 		}
@@ -123,11 +123,11 @@ func (s *Service) OnGrep(event *common.ApplicationEvent) {
 }
 
 // выводит логи в терминал
-func (s *Service) print(mailId string, lines []string, wg *sync.WaitGroup) {
+func (s *Service) print(mailID string, lines []string, wg *sync.WaitGroup) {
 	out := new(bytes.Buffer)
 
 	for _, line := range lines {
-		if strings.Contains(line, mailId) {
+		if strings.Contains(line, mailID) {
 			out.WriteString(line)
 			out.WriteString("\n")
 		}
@@ -137,7 +137,7 @@ func (s *Service) print(mailId string, lines []string, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-// завершает работу сервиса
+// OnFinish завершает работу сервиса
 func (s *Service) OnFinish(event *common.ApplicationEvent) {
 	s.logFile.Close()
 }
