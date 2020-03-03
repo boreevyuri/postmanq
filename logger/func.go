@@ -2,8 +2,9 @@ package logger
 
 import (
 	"fmt"
-	"github.com/Halfi/postmanq/common"
 	"runtime/debug"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
 // посылает сервису логирования запись для логирования произвольного уровня

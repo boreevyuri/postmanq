@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/Halfi/postmanq/common"
-	yaml "gopkg.in/yaml.v2"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/boreevyuri/postmanq/common"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var (

@@ -1,15 +1,16 @@
 package application
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/connector"
-	"github.com/Halfi/postmanq/consumer"
-	"github.com/Halfi/postmanq/guardian"
-	"github.com/Halfi/postmanq/limiter"
-	"github.com/Halfi/postmanq/logger"
-	"github.com/Halfi/postmanq/mailer"
-	yaml "gopkg.in/yaml.v2"
 	"runtime"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/connector"
+	"github.com/boreevyuri/postmanq/consumer"
+	"github.com/boreevyuri/postmanq/guardian"
+	"github.com/boreevyuri/postmanq/limiter"
+	"github.com/boreevyuri/postmanq/logger"
+	"github.com/boreevyuri/postmanq/mailer"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // приложение, рассылающее письма

@@ -1,10 +1,11 @@
 package limiter
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
-	yaml "gopkg.in/yaml.v2"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var (

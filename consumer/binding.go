@@ -2,10 +2,11 @@ package consumer
 
 import (
 	"fmt"
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
-	"github.com/streadway/amqp"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
+	"github.com/streadway/amqp"
 )
 
 // тип точки обмена

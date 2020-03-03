@@ -4,11 +4,12 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
+	"io/ioutil"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
 	"github.com/byorty/dkim"
 	yaml "gopkg.in/yaml.v2"
-	"io/ioutil"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 	events = make(chan *common.SendEvent)
 )
 
-// сервис отправки писем
+// Service отправки писем
 type Service struct {
 	// количество отправителей
 	MailersCount int `yaml:"workers"`
@@ -33,7 +34,7 @@ type Service struct {
 	privateKey *rsa.PrivateKey
 }
 
-// создает новый сервис отправки писем
+// Inst создает новый сервис отправки писем
 func Inst() common.SendingService {
 	if service == nil {
 		service = new(Service)
@@ -41,7 +42,7 @@ func Inst() common.SendingService {
 	return service
 }
 
-// инициализирует сервис отправки писем
+// OnInit инициализирует сервис отправки писем
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
@@ -79,7 +80,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// запускает отправителей и прием сообщений из очереди
+// OnRun запускает отправителей и прием сообщений из очереди
 func (s *Service) OnRun() {
 	logger.Debug("run mailers apps...")
 	for i := 0; i < s.MailersCount; i++ {
@@ -87,12 +88,12 @@ func (s *Service) OnRun() {
 	}
 }
 
-// канал для приема событий отправки писем
+// Events канал для приема событий отправки писем
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// завершает работу сервиса отправки писем
+// OnFinish завершает работу сервиса отправки писем
 func (s *Service) OnFinish() {
 	close(events)
 }

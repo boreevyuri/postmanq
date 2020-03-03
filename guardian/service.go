@@ -1,8 +1,8 @@
 package guardian
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
 	yaml "gopkg.in/yaml.v2"
 )
 

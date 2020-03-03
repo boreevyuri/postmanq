@@ -1,10 +1,11 @@
 package application
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
 	"io/ioutil"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
 )
 
 // базовое приложение

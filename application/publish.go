@@ -1,8 +1,8 @@
 package application
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/consumer"
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/consumer"
 )
 
 // приложение, перекладывающее письма из очереди в очередь

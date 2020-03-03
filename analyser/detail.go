@@ -2,9 +2,10 @@ package analyser
 
 import (
 	"fmt"
-	"github.com/Halfi/postmanq/common"
 	"regexp"
 	"strings"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
 // автор таблиц, выводящий детализированные отчеты об ошибке

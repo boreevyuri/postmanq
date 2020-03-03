@@ -99,8 +99,8 @@ Selector-ом может быть любым словом на латинице.
     cd /some/path && mkdir postmanq && cd postmanq/
     export GOPATH=/some/path/postmanq/
     export GOBIN=/some/path/postmanq/bin/
-    go get -d github.com/Halfi/postmanq/cmd
-    cd src/github.com/Halfi/postmanq
+    go get -d github.com/boreevyuri/postmanq/cmd
+    cd src/github.com/boreevyuri/postmanq
     git checkout v.3.1
     go install cmd/postmanq.go
     go install cmd/pmq-grep.go
@@ -140,12 +140,12 @@ Selector-ом может быть любым словом на латинице.
 
 ## Docker Качаем конфиг:
 ```bash
-curl -o /path/to/config.yaml https://raw.githubusercontent.com/Halfi/postmanq/v.3.1/config.yaml
+curl -o /path/to/config.yaml https://raw.githubusercontent.com/boreevyuri/postmanq/v.3.1/config.yaml
 ```
 Настраиваем доступы к AMQP-серверу.
 
 И запускаем, прокинув конфиг:
 
 ```bash
-docker run -v `/path/to/config.yaml`:`/etc/postmaq.yaml` -d --restart unless-stopped --name postmanq halfi/postmanq:latest  
+docker run -v `/path/to/config.yaml`:`/etc/postmaq.yaml` -d --restart unless-stopped --name postmanq boreevyuri/postmanq:latest  
 ```  

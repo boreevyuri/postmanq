@@ -1,8 +1,9 @@
 package limiter
 
 import (
-	"github.com/Halfi/postmanq/common"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
 // тип ограничения

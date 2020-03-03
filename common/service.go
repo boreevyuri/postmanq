@@ -6,19 +6,19 @@ package common
 // сервис - это модуль программы, отвечающий за выполнение одной конкретной задачи, например логирование
 // сервис может сам выполнять эту задачу, либо передавать выполнение задачи внутренним обработчикам
 
-// сервис требующий инициализиции
+// Service сервис требующий инициализиции
 // данные для инициализиции берутся из файла настроек
 type Service interface {
 	OnInit(*ApplicationEvent)
 }
 
-// сервис получающий событие отправки письма
+// EventService сервис получающий событие отправки письма
 // используется сервисами для передачи события друг другу
 type EventService interface {
 	Events() chan *SendEvent
 }
 
-// сервис принимающий участие в отправке письма
+// SendingService сервис принимающий участие в отправке письма
 type SendingService interface {
 	Service
 	EventService
@@ -26,20 +26,20 @@ type SendingService interface {
 	OnFinish()
 }
 
-// сервис принимающий участие в агрегации и выводе в консоль писем с ошибками
+// ReportService сервис принимающий участие в агрегации и выводе в консоль писем с ошибками
 type ReportService interface {
 	Service
 	EventService
 	OnShowReport()
 }
 
-// сервис перекладывающий письма из очереди в очередь
+// PublishService сервис перекладывающий письма из очереди в очередь
 type PublishService interface {
 	Service
 	OnPublish(*ApplicationEvent)
 }
 
-// сервис ищущий записи в логе по письму
+// GrepService сервис ищущий записи в логе по письму
 type GrepService interface {
 	Service
 	OnGrep(*ApplicationEvent)

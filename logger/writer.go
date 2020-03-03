@@ -2,10 +2,11 @@ package logger
 
 import (
 	"fmt"
-	"github.com/Halfi/postmanq/common"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
 // автор логов

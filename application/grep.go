@@ -1,8 +1,8 @@
 package application
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/grep"
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/grep"
 )
 
 // приложение, ищущее логи по адресату или получателю

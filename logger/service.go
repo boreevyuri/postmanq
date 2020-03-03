@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/Halfi/postmanq/common"
+	"github.com/boreevyuri/postmanq/common"
 	yaml "gopkg.in/yaml.v2"
 )
 
