@@ -6,9 +6,9 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 
+	"github.com/boreevyuri/dkim"
 	"github.com/boreevyuri/postmanq/common"
 	"github.com/boreevyuri/postmanq/logger"
-	"github.com/byorty/dkim"
 	yaml "gopkg.in/yaml.v2"
 )
 

@@ -44,14 +44,14 @@ receiveConnect:
 
 	// смотрим все mx сервера почтового сервиса
 	for _, mxServer := range event.server.mxServers {
-		logger.Debug("connector#%d-%d try receive connection for %s", c.id, event.Message.ID, mxServer.hostname)
+		logger.Debug("connector#%d-%d try to receive connection for %s", c.id, event.Message.ID, mxServer.hostname)
 
 		// пробуем получить клиента
 		event.Queue, _ = mxServer.queues[event.address]
 		client := event.Queue.Pop()
 		if client != nil {
 			targetClient = client.(*common.SMTPClient)
-			logger.Debug("connector%d-%d found free smtp client#%d", c.id, event.Message.ID, targetClient.ID)
+			logger.Debug("connector#%d-%d found free smtp client#%d", c.id, event.Message.ID, targetClient.ID)
 		}
 
 		// создаем новое соединение к почтовому сервису

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/byorty/clitable"
+	"github.com/boreevyuri/clitable"
 )
 
 // TableWriter составитель таблиц

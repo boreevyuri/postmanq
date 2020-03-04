@@ -124,14 +124,14 @@ func (s *Service) receiveMessage(event *common.SendEvent) {
 		}
 		if report == nil {
 			report = &Report{
-				Id:        reportsLen + 1,
+				ID:        reportsLen + 1,
 				Envelope:  message.Envelope,
 				Recipient: message.Recipient,
 				Code:      message.Error.Code,
 				Message:   message.Error.Message,
 			}
 			report.CreatedDates = make([]time.Time, 0)
-			s.reports[report.Id] = report
+			s.reports[report.ID] = report
 		}
 
 		report.CreatedDates = append(report.CreatedDates, message.CreatedDate)
@@ -139,10 +139,10 @@ func (s *Service) receiveMessage(event *common.SendEvent) {
 		code := strconv.Itoa(report.Code)
 
 		if isValidCode {
-			codesWriter.Add(code, report.Id)
+			codesWriter.Add(code, report.ID)
 		}
-		envelopesWriter.Add(report.Envelope, report.Id)
-		recipientsWriter.Add(report.Recipient, report.Id)
+		envelopesWriter.Add(report.Envelope, report.ID)
+		recipientsWriter.Add(report.Recipient, report.ID)
 		s.mutex.Unlock()
 	}
 }

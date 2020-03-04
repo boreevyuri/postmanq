@@ -104,13 +104,13 @@ type MailMessage struct {
 	// идентификатор для логов
 	ID int64 `json:"-"`
 
-	// отправитель
+	// отправитель из "envelope" из очереди
 	Envelope string `json:"envelope"`
 
-	// получатель
+	// получатель "recipient" из очереди
 	Recipient string `json:"recipient"`
 
-	// тело письма
+	// тело письма "body" из очереди
 	Body string `json:"body"`
 
 	// домен отправителя, удобно сразу получить и использовать далее
@@ -125,33 +125,33 @@ type MailMessage struct {
 	// тип очереди, в которою письмо уже было отправлено после неудачной отправки, ипользуется для цепочки очередей
 	BindingType DelayedBindingType `json:"bindingType"`
 
-	// ошибка отправки
+	// ошибка отправки "error" из очереди
 	Error *MailError `json:"error"`
 
+	// количество попыток отправки "trySendingCount" из очереди
 	TrySendingCount int `json:"trySendingCount"`
 }
 
 // Init инициализирует письмо
-func (this *MailMessage) Init() {
-	this.ID = time.Now().UnixNano()
-	this.TrySendingCount++
-	this.CreatedDate = time.Now()
-	if hostname, err := this.getHostnameFromEmail(this.Envelope); err == nil {
-		this.HostnameFrom = hostname
+func (m *MailMessage) Init() {
+	m.ID = time.Now().UnixNano()
+	m.TrySendingCount++
+	m.CreatedDate = time.Now()
+	if hostname, err := m.getHostnameFromEmail(m.Envelope); err == nil {
+		m.HostnameFrom = hostname
 	}
-	if hostname, err := this.getHostnameFromEmail(this.Recipient); err == nil {
-		this.HostnameTo = hostname
+	if hostname, err := m.getHostnameFromEmail(m.Recipient); err == nil {
+		m.HostnameTo = hostname
 	}
 }
 
-// получает домен из адреса
-func (this *MailMessage) getHostnameFromEmail(email string) (string, error) {
+// получает домен из адреса "user@domain"
+func (m *MailMessage) getHostnameFromEmail(email string) (string, error) {
 	matches := EmailRegexp.FindAllStringSubmatch(email, -1)
 	if len(matches) == 1 && len(matches[0]) == 2 {
 		return matches[0][1], nil
-	} else {
-		return "", errors.New("invalid email address")
 	}
+	return "", errors.New("invalid email address")
 }
 
 // ReturnMail возвращает письмо обратно в очередь после ошибки во время отправки

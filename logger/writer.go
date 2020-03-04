@@ -18,7 +18,7 @@ type Writer interface {
 type StdoutWriter struct{}
 
 // writeString пишет логи в стандартный вывод
-func (this *StdoutWriter) writeString(str string) {
+func (s *StdoutWriter) writeString(str string) {
 	os.Stdout.WriteString(str)
 }
 
@@ -28,8 +28,8 @@ type FileWriter struct {
 }
 
 // writeString пишет логи в файл
-func (this *FileWriter) writeString(str string) {
-	f, err := os.OpenFile(this.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
+func (fw *FileWriter) writeString(str string) {
+	f, err := os.OpenFile(fw.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err == nil {
 		_, err = f.WriteString(str)
 		f.Close()
@@ -86,7 +86,8 @@ func (w *Writers) writeMessage(writer Writer, message *Message) {
 	writer.writeString(
 		fmt.Sprintf(
 			"PostmanQ | %v | %s: %s\n",
-			time.Now().Format("2006-01-02 15:04:05"),
+			// time.Now().Format("2006-01-02 15:04:05"),
+			time.Now(),
 			logLevelByID[message.Level],
 			fmt.Sprintf(message.Message, message.Args...),
 		),

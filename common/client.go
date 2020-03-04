@@ -34,7 +34,7 @@ type SMTPClient struct {
 	// дата создания или изменения статуса клиента
 	ModifyDate time.Time
 
-	// статус
+	// статус SMTPClient
 	Status SMTPClientStatus
 
 	// таймер, по истечении которого, соединение к почтовому сервису будет разорвано

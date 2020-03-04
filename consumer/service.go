@@ -21,13 +21,13 @@ var (
 
 // Service сервис получения сообщений
 type Service struct {
-	// настройка получателей сообщений
+	// настройка подписчиков на сообщения
 	Configs []*Config `yaml:"consumers"`
 
 	// подключения к очередям
 	connections map[string]*amqp.Connection
 
-	// получатели сообщений из очереди
+	// подписчики на сообщения из очереди
 	consumers map[string][]*Consumer
 }
 

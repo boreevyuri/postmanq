@@ -4,13 +4,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/byorty/clitable"
+	"github.com/boreevyuri/clitable"
 )
 
 // Report отчет об ошибке
 type Report struct {
 	// идентификатор
-	Id int
+	ID int
 
 	// отправитель
 	Envelope string

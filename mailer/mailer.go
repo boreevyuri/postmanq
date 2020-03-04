@@ -3,9 +3,9 @@ package mailer
 import (
 	"fmt"
 
+	"github.com/boreevyuri/dkim"
 	"github.com/boreevyuri/postmanq/common"
 	"github.com/boreevyuri/postmanq/logger"
-	"github.com/byorty/dkim"
 )
 
 // Mailer отправитель письма
@@ -85,7 +85,8 @@ func (m *Mailer) send(event *common.SendEvent) {
 				_, err = fmt.Fprint(wc, message.Body)
 				if err == nil {
 					wc.Close()
-					logger.Debug("%s", message.Body)
+					// logger.Debug("%s", message.Body)
+					logger.Info("here is body")
 					logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
 					// стараемся слать письма через уже созданное соединение,
 					// поэтому после отправки письма не закрываем соединение
@@ -98,6 +99,8 @@ func (m *Mailer) send(event *common.SendEvent) {
 				}
 			}
 		}
+	} else {
+		logger.Debug("mailer#%d-%d got error: %s", m.id, message.ID, err)
 	}
 
 	event.Client.Wait()
