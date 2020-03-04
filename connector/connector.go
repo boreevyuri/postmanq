@@ -14,7 +14,7 @@ var (
 	connectorEvents = make(chan *ConnectionEvent)
 )
 
-// Connector соединитель, устанавливает соединение к почтовому сервису
+// Connector устанавливает соединение к почтовому сервису
 type Connector struct {
 	// Идентификатор для логов
 	id int

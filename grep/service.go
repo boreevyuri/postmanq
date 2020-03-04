@@ -91,8 +91,8 @@ func (s *Service) OnGrep(event *common.ApplicationEvent) {
 						mailID = results[1]
 
 						successExpr = fmt.Sprintf("%s success send", mailID)
-						failExpr = fmt.Sprintf("%s publish failure mail to queue", mailID)
-						failPubExpr = fmt.Sprintf("%s can't publish failure mail to queue", mailID)
+						failExpr = fmt.Sprintf("%s publish failed mail to queue", mailID)
+						failPubExpr = fmt.Sprintf("%s can't publish failed mail to queue", mailID)
 						delayExpr = fmt.Sprintf("%s detect old dlx queue", mailID)
 						limitExpr = fmt.Sprintf("%s detect overlimit", mailID)
 

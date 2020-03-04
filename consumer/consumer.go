@@ -155,7 +155,7 @@ func (c *Consumer) handleErrorSend(channel *amqp.Channel, message *common.MailMe
 		)
 		if err == nil {
 			logger.Info(
-				"consumer#%d-%d publish failure mail to queue %s, message: %s, code: %d",
+				"consumer#%d-%d publish failed mail to queue %s, message: %s, code: %d",
 				c.id,
 				message.ID,
 				failureBinding.Queue,
@@ -164,7 +164,7 @@ func (c *Consumer) handleErrorSend(channel *amqp.Channel, message *common.MailMe
 			)
 		} else {
 			logger.Info(
-				"consumer#%d-%d can't publish failure mail to queue %s, message: %s, code: %d, publish error% %v",
+				"consumer#%d-%d can't publish failed mail to queue %s, message: %s, code: %d, publish error% %v",
 				c.id,
 				message.ID,
 				failureBinding.Queue,
@@ -237,9 +237,9 @@ func (c *Consumer) publishDelayedMessage(channel *amqp.Channel, bindingType comm
 				},
 			)
 			if err == nil {
-				logger.Debug("consumer#%d-%d publish failure mail to queue %s", c.id, message.ID, delayedBinding.Queue)
+				logger.Debug("consumer#%d-%d publish failed mail to queue %s", c.id, message.ID, delayedBinding.Queue)
 			} else {
-				logger.Warn("consumer#%d-%d can't publish failure mail to queue %s, error - %v", c.id, message.ID, delayedBinding.Queue, err)
+				logger.Warn("consumer#%d-%d can't publish failed mail to queue %s, error - %v", c.id, message.ID, delayedBinding.Queue, err)
 			}
 		} else {
 			logger.Warn("consumer#%d-%d can't marshal mail to json", c.id, message.ID)
