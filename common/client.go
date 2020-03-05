@@ -46,6 +46,14 @@ func (s *SMTPClient) SetTimeout(timeout time.Duration) {
 	s.Conn.SetDeadline(time.Now().Add(timeout))
 }
 
+// Close принудительно закрывает соединение
+// mail.ru обрывает соединение со своей стороны, получаем broken pipe
+func (s *SMTPClient) Close() {
+	s.Status = DisconnectedSMTPClientStatus
+	s.Worker.Close()
+	s.timer = nil
+}
+
 // Wait переводит клиента в ожидание
 // после окончания ожидания соединение разрывается, а статус меняется на отсоединенный
 func (s *SMTPClient) Wait() {

@@ -52,6 +52,13 @@ receiveConnect:
 		if client != nil {
 			targetClient = client.(*common.SMTPClient)
 			logger.Debug("connector#%d-%d found free smtp client#%d", c.id, event.Message.ID, targetClient.ID)
+			logger.Debug("connector#%d-%d check connection to %s smtp client#%d", c.id, event.Message.ID, event.address, targetClient.ID)
+			err := targetClient.Worker.Noop()
+			if err != nil {
+				logger.Debug("connector#%d-%d smtp connector is dead client#%d", c.id, event.Message.ID, targetClient.ID)
+				targetClient.Close()
+				// targetClient = nil
+			}
 		}
 
 		// создаем новое соединение к почтовому сервису

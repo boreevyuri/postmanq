@@ -72,7 +72,9 @@ func (m *Mailer) send(event *common.SendEvent) {
 	success := false
 	event.Client.SetTimeout(common.App.Timeout().Mail)
 	err := worker.Mail(message.Envelope)
-	if err == nil {
+	if err != nil {
+		logger.Debug("mailer#%d-%d got error from SMTPClient: %+v", m.id, message.ID, err)
+	} else {
 		logger.Debug("mailer#%d-%d send command MAIL FROM: %s", m.id, message.ID, message.Envelope)
 		event.Client.SetTimeout(common.App.Timeout().Rcpt)
 		err = worker.Rcpt(message.Recipient)
@@ -99,8 +101,6 @@ func (m *Mailer) send(event *common.SendEvent) {
 				}
 			}
 		}
-	} else {
-		logger.Debug("mailer#%d-%d got error: %s", m.id, message.ID, err)
 	}
 
 	event.Client.Wait()
