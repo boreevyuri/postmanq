@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Halfi/postmanq/application"
-	"github.com/Halfi/postmanq/common"
+
+	"github.com/boreevyuri/postmanq/application"
+	"github.com/boreevyuri/postmanq/common"
 )
 
 func main() {

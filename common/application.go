@@ -8,37 +8,37 @@ import (
 )
 
 const (
-	// используется в примерах использования
+	// ExampleConfigYaml используется в примерах использования
 	ExampleConfigYaml = "/path/to/config/file.yaml"
 
-	// невалидная строка, введенная пользователем
+	// InvalidInputString невалидная строка, введенная пользователем
 	InvalidInputString = ""
 
-	// невалидное число, введенное пользователем
+	// InvalidInputInt невалидное число, введенное пользователем
 	InvalidInputInt = 0
 )
 
 var (
-	// объект текущего приложения, иногда необходим сервисам, для отправки событий приложению
+	// App объект текущего приложения, иногда необходим сервисам, для отправки событий приложению
 	App Application
 
-	// сервисы, используются для создания итератора
+	// Services сервисы, используются для создания итератора
 	Services []interface{}
 
-	// количество goroutine, может измениться для инициализации приложения
+	// DefaultWorkersCount количество goroutine, может измениться для инициализации приложения
 	DefaultWorkersCount = runtime.NumCPU()
 
-	// используется в нескольких пакетах, поэтому вынес сюда
+	// FilenameRegex используется в нескольких пакетах, поэтому вынес сюда
 	FilenameRegex = regexp.MustCompile(`[^\\/]+\.[^\\/]+`)
 
-	// печает аргументы, используемые приложением
+	// PrintUsage печает аргументы, используемые приложением
 	PrintUsage = func(f *flag.Flag) {
 		format := "  -%s %s\n"
 		fmt.Printf(format, f.Name, f.Usage)
 	}
 )
 
-// проект содержит несколько приложений: pmq-grep, pmq-publish, pmq-report, postmanq и т.д.
+// Application проект содержит несколько приложений: pmq-grep, pmq-publish, pmq-report, postmanq и т.д.
 // чтобы упростить и стандартизировать приложения, разработан этот интерфейс
 type Application interface {
 	// устанавливает путь к файлу с настройками

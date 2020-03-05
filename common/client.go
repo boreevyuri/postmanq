@@ -6,24 +6,24 @@ import (
 	"time"
 )
 
-// статус клиента почтового сервера
-type SmtpClientStatus int
+// SMTPClientStatus статус клиента почтового сервера
+type SMTPClientStatus int
 
 const (
-	// отсылает письмо
-	WorkingSmtpClientStatus SmtpClientStatus = iota
+	// WorkingSMTPClientStatus отсылает письмо
+	WorkingSMTPClientStatus SMTPClientStatus = iota
 
-	// ожидает письма
-	WaitingSmtpClientStatus
+	// WaitingSMTPClientStatus ожидает письма
+	WaitingSMTPClientStatus
 
-	// отсоединен
-	DisconnectedSmtpClientStatus
+	// DisconnectedSMTPClientStatus отсоединен
+	DisconnectedSMTPClientStatus
 )
 
-// клиент почтового сервера
-type SmtpClient struct {
+// SMTPClient клиент почтового сервера
+type SMTPClient struct {
 	// идертификатор клиента для удобства в логах
-	Id int
+	ID int
 
 	// соединение к почтовому серверу
 	Conn net.Conn
@@ -34,33 +34,41 @@ type SmtpClient struct {
 	// дата создания или изменения статуса клиента
 	ModifyDate time.Time
 
-	// статус
-	Status SmtpClientStatus
+	// статус SMTPClient
+	Status SMTPClientStatus
 
 	// таймер, по истечении которого, соединение к почтовому сервису будет разорвано
 	timer *time.Timer
 }
 
-// сстанавливайт таймаут на чтение и запись соединения
-func (s *SmtpClient) SetTimeout(timeout time.Duration) {
+// SetTimeout устанавливайт таймаут на чтение и запись соединения
+func (s *SMTPClient) SetTimeout(timeout time.Duration) {
 	s.Conn.SetDeadline(time.Now().Add(timeout))
 }
 
-// переводит клиента в ожидание
+// Close принудительно закрывает соединение
+// mail.ru обрывает соединение со своей стороны, получаем broken pipe
+func (s *SMTPClient) Close() {
+	s.Status = DisconnectedSMTPClientStatus
+	s.Worker.Close()
+	s.timer = nil
+}
+
+// Wait переводит клиента в ожидание
 // после окончания ожидания соединение разрывается, а статус меняется на отсоединенный
-func (s *SmtpClient) Wait() {
-	s.Status = WaitingSmtpClientStatus
+func (s *SMTPClient) Wait() {
+	s.Status = WaitingSMTPClientStatus
 	s.timer = time.AfterFunc(App.Timeout().Waiting, func() {
-		s.Status = DisconnectedSmtpClientStatus
+		s.Status = DisconnectedSMTPClientStatus
 		s.Worker.Close()
 		s.timer = nil
 	})
 }
 
-// переводит клиента в рабочее состояние
+// Wakeup переводит клиента в рабочее состояние
 // если клиент был в ожидании, ожидание прерывается
-func (s *SmtpClient) Wakeup() {
-	s.Status = WorkingSmtpClientStatus
+func (s *SMTPClient) Wakeup() {
+	s.Status = WorkingSMTPClientStatus
 	if s.timer != nil {
 		s.timer.Stop()
 		s.timer = nil

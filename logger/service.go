@@ -1,11 +1,11 @@
 package logger
 
 import (
-	"github.com/Halfi/postmanq/common"
+	"github.com/boreevyuri/postmanq/common"
 	yaml "gopkg.in/yaml.v2"
 )
 
-// уровень логирования
+// Level уровень логирования
 type Level int
 
 // уровни логирования
@@ -26,7 +26,7 @@ const (
 
 var (
 	// названия уровней логирования, используется непосредственно в момент создания записи в лог
-	logLevelById = map[Level]string{
+	logLevelByID = map[Level]string{
 		DebugLevel:   DebugLevelName,
 		InfoLevel:    InfoLevelName,
 		WarningLevel: WarningLevelName,
@@ -45,7 +45,7 @@ var (
 	service  *Service
 )
 
-// запись логирования
+// Message запись логирования
 type Message struct {
 	// сообщение для лога, может содержать параметры
 	Message string
@@ -57,7 +57,7 @@ type Message struct {
 	Args []interface{}
 }
 
-// созадние новой записи логирования
+// NewMessage создание новой записи логирования
 func NewMessage(level Level, message string, args ...interface{}) *Message {
 	logMessage := new(Message)
 	logMessage.Level = level
@@ -66,7 +66,7 @@ func NewMessage(level Level, message string, args ...interface{}) *Message {
 	return logMessage
 }
 
-// сервис логирования
+// Service сервис логирования
 type Service struct {
 	// название уровня логирования, устанавливается в конфиге
 	LevelName string `yaml:"logLevel"`
@@ -84,7 +84,7 @@ type Service struct {
 	messages chan *Message
 }
 
-// создает новый сервис логирования
+// Inst создает новый сервис логирования
 func Inst() common.SendingService {
 	if service == nil {
 		service = new(Service)
@@ -95,7 +95,7 @@ func Inst() common.SendingService {
 	return service
 }
 
-// инициализирует сервис логирования
+// OnInit инициализирует сервис логирования
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
@@ -113,15 +113,15 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// ничего не делает, авторы логов уже пишут
+// OnRun ничего не делает, писатели логов уже пишут. Заглушка
 func (s *Service) OnRun() {}
 
-// не учавствеут в отправке писем
+// Events не участвует в отправке писем. Заглушка
 func (s *Service) Events() chan *common.SendEvent {
 	return nil
 }
 
-// закрывает канал логирования
+// OnFinish закрывает канал логирования
 func (s *Service) OnFinish() {
 	close(messages)
 }

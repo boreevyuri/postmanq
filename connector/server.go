@@ -1,37 +1,38 @@
 package connector
 
 import (
-	"github.com/Halfi/postmanq/common"
 	"net"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
-// статус почтового сервис
+// MailServerStatus статус почтового сервис
 type MailServerStatus int
 
 const (
-	// по сервису ведется поиск информации
+	// LookupMailServerStatus по сервису ведется поиск информации
 	LookupMailServerStatus MailServerStatus = iota
 
-	// по сервису успешно собрана информация
+	// SuccessMailServerStatus по сервису успешно собрана информация
 	SuccessMailServerStatus
 
-	// по сервису не удалось собрать информацию
+	// ErrorMailServerStatus по сервису не удалось собрать информацию
 	ErrorMailServerStatus
 )
 
-// почтовый сервис
+// MailServer почтовый сервис
 type MailServer struct {
 	// серверы почтового сервиса
 	mxServers []*MxServer
 
 	// номер потока, собирающего информацию о почтовом сервисе
-	connectorId int
+	connectorID int
 
 	// статус, говорящий о том, собранали ли информация о почтовом сервисе
 	status MailServerStatus
 }
 
-// почтовый сервер
+// MxServer почтовый сервер
 type MxServer struct {
 	// доменное имя почтового сервера
 	hostname string
@@ -40,7 +41,7 @@ type MxServer struct {
 	ips []net.IP
 
 	// клиенты сервера
-	clients []*common.SmtpClient
+	clients []*common.SMTPClient
 
 	// А запись сервера
 	realServerName string

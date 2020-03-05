@@ -1,12 +1,13 @@
 package connector
 
 import (
-	"github.com/Halfi/postmanq/logger"
 	"net"
 	"regexp"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/boreevyuri/postmanq/logger"
 )
 
 var (
@@ -15,7 +16,7 @@ var (
 	seekerMutex = new(sync.Mutex)
 )
 
-// искатель, ищет информацию о сервере
+// Seeker искатель, ищет информацию о сервере
 type Seeker struct {
 	// Идентификатор для логов
 	id int
@@ -40,10 +41,10 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 	// добавляем новый почтовый домен
 	seekerMutex.Lock()
 	if _, ok := mailServers[hostnameTo]; !ok {
-		logger.Debug("seeker#%d-%d create mail server for %s", event.connectorId, event.Message.Id, hostnameTo)
+		logger.Debug("seeker#%d-%d create mail server for %s", event.connectorID, event.Message.ID, hostnameTo)
 		mailServers[hostnameTo] = &MailServer{
 			status:      LookupMailServerStatus,
-			connectorId: event.connectorId,
+			connectorID: event.connectorID,
 		}
 	}
 	seekerMutex.Unlock()
@@ -54,14 +55,14 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 	logger.Debug(
 		"seeker#%d-%d domain %s, event connector#%d, mail connector#%d, status#%d",
 		s.id,
-		event.Message.Id,
+		event.Message.ID,
 		hostnameTo,
-		event.connectorId,
-		mailServer.connectorId,
+		event.connectorID,
+		mailServer.connectorID,
 		mailServer.status,
 	)
-	if event.connectorId == mailServer.connectorId && mailServer.status == LookupMailServerStatus {
-		logger.Debug("seeker#%d-%d look up mx domains for %s...", s.id, event.Message.Id, hostnameTo)
+	if event.connectorID == mailServer.connectorID && mailServer.status == LookupMailServerStatus {
+		logger.Debug("seeker#%d-%d look up mx domains for %s...", s.id, event.Message.ID, hostnameTo)
 		mailServer := mailServers[hostnameTo]
 		// ищем почтовые сервера для домена
 		mxes, err := net.LookupMX(hostnameTo)
@@ -69,7 +70,7 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 			mailServer.mxServers = make([]*MxServer, len(mxes))
 			for i, mx := range mxes {
 				mxHostname := strings.TrimRight(mx.Host, ".")
-				logger.Debug("seeker#%d-%d look up mx domain %s for %s", s.id, event.Message.Id, mxHostname, hostnameTo)
+				logger.Debug("seeker#%d-%d look up mx domain %s for %s", s.id, event.Message.ID, mxHostname, hostnameTo)
 				mxServer := newMxServer(mxHostname)
 				//mxServer.realServerName = s.seekRealServerName(mx.Host, event)
 				// собираем IP адреса для сертификата и проверок
@@ -79,7 +80,7 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 						// берем только IPv4
 						ip = ip.To4()
 						if ip != nil {
-							logger.Debug("seeker#%d-%d look up ip %s for %s", s.id, event.Message.Id, ip.String(), mxHostname)
+							logger.Debug("seeker#%d-%d look up ip %s for %s", s.id, event.Message.ID, ip.String(), mxHostname)
 							existsIpsLen := len(mxServer.ips)
 							index := sort.Search(existsIpsLen, func(i int) bool {
 								return mxServer.ips[i].Equal(ip)
@@ -103,7 +104,7 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 								addr = strings.TrimRight(addr, ".")
 								// отсекаем адрес, если это IP
 								if net.ParseIP(addr) == nil {
-									logger.Debug("seeker#%d-%d look up addr %s for ip %s", s.id, event.Message.Id, addr, ip.String())
+									logger.Debug("seeker#%d-%d look up addr %s for ip %s", s.id, event.Message.ID, addr, ip.String())
 									if len(mxServer.realServerName) == 0 {
 										// пытаем найти домен почтового сервера в домене почты
 										hostnameMatched, _ := regexp.MatchString(hostnameTo, mxServer.hostname)
@@ -120,23 +121,23 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 								}
 							}
 						} else {
-							logger.Warn("seeker#%d-%d can't look up addr for ip %s, err: %s", s.id, event.Message.Id, ip.String(), err)
+							logger.Warn("seeker#%d-%d can't look up addr for ip %s, err: %s", s.id, event.Message.ID, ip.String(), err)
 						}
 					}
 				} else {
-					logger.Warn("seeker#%d-%d can't look up ips for mx %s", s.id, event.Message.Id, mxHostname)
+					logger.Warn("seeker#%d-%d can't look up ips for mx %s", s.id, event.Message.ID, mxHostname)
 				}
 				if len(mxServer.realServerName) == 0 { // если безвыходная ситуация
 					mxServer.realServerName = mxServer.hostname
 				}
-				logger.Debug("seeker#%d-%d look up detect real server name %s", s.id, event.Message.Id, mxServer.realServerName)
+				logger.Debug("seeker#%d-%d look up detect real server name %s", s.id, event.Message.ID, mxServer.realServerName)
 				mailServer.mxServers[i] = mxServer
 			}
 			mailServer.status = SuccessMailServerStatus
-			logger.Debug("seeker#%d-%d look up %s success", s.id, event.Message.Id, hostnameTo)
+			logger.Debug("seeker#%d-%d look up %s success", s.id, event.Message.ID, hostnameTo)
 		} else {
 			mailServer.status = ErrorMailServerStatus
-			logger.Warn("seeker#%d-%d can't look up mx domains for %s, err: %v", s.id, event.Message.Id, hostnameTo, err)
+			logger.Warn("seeker#%d-%d can't look up mx domains for %s, err: %v", s.id, event.Message.ID, hostnameTo, err)
 		}
 	}
 	event.servers <- mailServer
@@ -155,11 +156,9 @@ func (s *Seeker) seekRealServerName(hostname string, event *ConnectionEvent) str
 	if err == nil && len(mxes) > 0 {
 		if strings.Contains(mxes[0].Host, lookupHostname) {
 			return hostname
-		} else {
-			return s.seekRealServerName(mxes[0].Host, event)
 		}
-	} else {
-		logger.Warn("seeker#%d-%d can't look up real mx domains for %s, err: %v", s.id, event.Message.Id, lookupHostname, err)
-		return hostname
+		return s.seekRealServerName(mxes[0].Host, event)
 	}
+	logger.Warn("seeker#%d-%d can't look up real mx domains for %s, err: %v", s.id, event.Message.ID, lookupHostname, err)
+	return hostname
 }

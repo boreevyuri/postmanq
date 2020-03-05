@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/Halfi/postmanq/common"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
 var (
@@ -58,7 +59,7 @@ var (
 	})
 )
 
-// сервис получает и анализирует неотправленные письма
+// Service сервис получает и анализирует неотправленные письма
 type Service struct {
 	// семафор
 	mutex *sync.Mutex
@@ -70,19 +71,19 @@ type Service struct {
 	reports RowWriters
 }
 
-// возвращает объект сервиса
+// Inst возвращает объект сервиса
 func Inst() *Service {
 	return service
 }
 
-// инициализирует сервис
+// OnInit инициализирует сервис
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	s.events = make(chan *common.SendEvent)
 	s.reports = make(RowWriters)
 	s.mutex = new(sync.Mutex)
 }
 
-// запускает получение событий и данных от пользователя
+// OnShowReport запускает получение событий и данных от пользователя
 func (s *Service) OnShowReport() {
 	for i := 0; i < common.DefaultWorkersCount; i++ {
 		go s.receiveMessages()
@@ -93,7 +94,7 @@ func (s *Service) OnShowReport() {
 	}
 }
 
-// слушает канал получения событий
+// receiveMessages слушает канал получения событий
 func (s *Service) receiveMessages() {
 	for event := range s.events {
 		s.receiveMessage(event)
@@ -123,14 +124,14 @@ func (s *Service) receiveMessage(event *common.SendEvent) {
 		}
 		if report == nil {
 			report = &Report{
-				Id:        reportsLen + 1,
+				ID:        reportsLen + 1,
 				Envelope:  message.Envelope,
 				Recipient: message.Recipient,
 				Code:      message.Error.Code,
 				Message:   message.Error.Message,
 			}
 			report.CreatedDates = make([]time.Time, 0)
-			s.reports[report.Id] = report
+			s.reports[report.ID] = report
 		}
 
 		report.CreatedDates = append(report.CreatedDates, message.CreatedDate)
@@ -138,10 +139,10 @@ func (s *Service) receiveMessage(event *common.SendEvent) {
 		code := strconv.Itoa(report.Code)
 
 		if isValidCode {
-			codesWriter.Add(code, report.Id)
+			codesWriter.Add(code, report.ID)
 		}
-		envelopesWriter.Add(report.Envelope, report.Id)
-		recipientsWriter.Add(report.Recipient, report.Id)
+		envelopesWriter.Add(report.Envelope, report.ID)
+		recipientsWriter.Add(report.Recipient, report.ID)
 		s.mutex.Unlock()
 	}
 }
@@ -239,7 +240,7 @@ func (s *Service) printUsage(flagSet *flag.FlagSet) {
 	fmt.Println("  -c * -l 100 -o 200  show reports with limit and offset")
 }
 
-// возвращает канал для отправки событий
+// Events возвращает канал для отправки событий
 func (s *Service) Events() chan *common.SendEvent {
 	return s.events
 }

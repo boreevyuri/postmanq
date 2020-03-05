@@ -1,21 +1,21 @@
 package application
 
 import (
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/grep"
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/grep"
 )
 
-// приложение, ищущее логи по адресату или получателю
+// Grep приложение, ищущее логи по адресату или получателю
 type Grep struct {
 	Abstract
 }
 
-// создает новое приложение
+// NewGrep создает новое приложение
 func NewGrep() common.Application {
 	return new(Grep)
 }
 
-// запускает приложение с аргументами
+// RunWithArgs запускает приложение с аргументами
 func (g *Grep) RunWithArgs(args ...interface{}) {
 	common.App = g
 	g.services = []interface{}{
@@ -31,7 +31,7 @@ func (g *Grep) RunWithArgs(args ...interface{}) {
 	g.run(g, event)
 }
 
-// запускает сервисы приложения
+// FireRun запускает сервисы приложения
 func (g *Grep) FireRun(event *common.ApplicationEvent, abstractService interface{}) {
 	service := abstractService.(common.GrepService)
 	go service.OnGrep(event)

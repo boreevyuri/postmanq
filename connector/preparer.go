@@ -1,14 +1,14 @@
 package connector
 
 import (
-	"errors"
 	"fmt"
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
 )
 
-// заготовщик, подготавливает событие соединения
+// Preparer заготовщик, подготавливает событие соединения
 type Preparer struct {
 	// Идентификатор для логов
 	id int
@@ -29,12 +29,12 @@ func (p *Preparer) run() {
 
 // подготавливает и запускает событие создание соединения
 func (p *Preparer) prepare(event *common.SendEvent) {
-	logger.Info("preparer#%d-%d try create connection", p.id, event.Message.Id)
+	logger.Info("preparer#%d-%d try create connection", p.id, event.Message.ID)
 
 	connectionEvent := &ConnectionEvent{
 		SendEvent:   event,
 		servers:     make(chan *MailServer, 1),
-		connectorId: p.id,
+		connectorID: p.id,
 		address:     service.Addresses[p.id%service.addressesLen],
 	}
 	goto connectToMailServer
@@ -52,14 +52,15 @@ connectToMailServer:
 	case ErrorMailServerStatus:
 		common.ReturnMail(
 			event,
-			errors.New(fmt.Sprintf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.Id, event.Message.HostnameTo)),
+			// errors.New(fmt.Sprintf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.Id, event.Message.HostnameTo)),
+			fmt.Errorf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.ID, event.Message.HostnameTo),
 		)
 	}
 	return
 
 waitLookup:
-	logger.Debug("preparer#%d-%d wait ending look up mail server %s...", p.id, event.Message.Id, event.Message.HostnameTo)
+	logger.Debug("preparer#%d-%d wait ending look up mail server %s...", p.id, event.Message.ID, event.Message.HostnameTo)
 	time.Sleep(common.App.Timeout().Sleep)
 	goto connectToMailServer
-	return
+	// return
 }

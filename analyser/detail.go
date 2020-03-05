@@ -2,12 +2,13 @@ package analyser
 
 import (
 	"fmt"
-	"github.com/Halfi/postmanq/common"
 	"regexp"
 	"strings"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
-// автор таблиц, выводящий детализированные отчеты об ошибке
+// DetailTableWriter рисователь таблиц, выводящий детализированные отчеты об ошибке
 type DetailTableWriter struct {
 	*AbstractTableWriter
 }
@@ -19,7 +20,7 @@ func newDetailTableWriter(fields []interface{}) TableWriter {
 	}
 }
 
-// записывает данные в таблицу
+// Show записывает данные в таблицу
 func (d *DetailTableWriter) Show() {
 	d.Clean()
 	keyRegex, _ := regexp.Compile(d.keyPattern)

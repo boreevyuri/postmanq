@@ -1,18 +1,23 @@
 package limiter
 
 import (
-	"github.com/Halfi/postmanq/common"
 	"time"
+
+	"github.com/boreevyuri/postmanq/common"
 )
 
-// тип ограничения
+// Kind тип ограничения
 type Kind string
 
 const (
+	// SecondKind - секундный тип ограничения
 	SecondKind Kind = "second"
-	MinuteKind      = "minute"
-	HourKind        = "hour"
-	DayKind         = "day"
+	// MinuteKind - минутный тип ограничения
+	MinuteKind = "minute"
+	// HourKind - часовое ограничение
+	HourKind = "hour"
+	// DayKind - ограничение на день
+	DayKind = "day"
 )
 
 var (
@@ -32,7 +37,7 @@ var (
 	}
 )
 
-// ограничение
+// Limit ограничение
 type Limit struct {
 	// максимально допустимое количество писем
 	Value int32 `json:"value"`
@@ -63,7 +68,7 @@ func (l *Limit) init() {
 	}
 }
 
-// сигнализирует о том, что надо ли обнулять текущее количество отправленных писем
+// isValidDuration сигнализирует о том, что надо ли обнулять текущее количество отправленных писем
 // если вернулось true, текущее количество отправленных писем не обнуляется
 // если вернулось false, текущее количество отправленных писем обнуляется
 func (l *Limit) isValidDuration(now time.Time) bool {

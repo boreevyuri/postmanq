@@ -3,10 +3,11 @@ package connector
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/Halfi/postmanq/common"
-	"github.com/Halfi/postmanq/logger"
-	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	"github.com/boreevyuri/postmanq/common"
+	"github.com/boreevyuri/postmanq/logger"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var (
@@ -31,7 +32,7 @@ var (
 	}
 )
 
-// сервис, управляющий соединениями к почтовым сервисам
+// Service сервис, управляющий соединениями к почтовым сервисам
 // письма могут отсылаться в несколько потоков, почтовый сервис может разрешить несколько подключений с одного IP
 // количество подключений может быть не равно количеству отсылающих потоков
 // если доверить управление подключениями отправляющим потокам, тогда это затруднит общее управление подключениями
@@ -61,7 +62,7 @@ type Service struct {
 	config *tls.Config
 }
 
-// создает новый сервис соединений
+// Inst создает новый сервис соединений
 func Inst() *Service {
 	if service == nil {
 		service = new(Service)
@@ -69,7 +70,7 @@ func Inst() *Service {
 	return service
 }
 
-// инициализирует сервис соединений
+// OnInit инициализирует сервис соединений
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
@@ -103,7 +104,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// запускает горутины
+// OnRun запускает горутины
 func (s *Service) OnRun() {
 	for i := 0; i < s.ConnectorsCount; i++ {
 		id := i + 1
@@ -113,12 +114,12 @@ func (s *Service) OnRun() {
 	}
 }
 
-// канал для приема событий отправки писем
+// Events канал для приема событий отправки писем
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// завершает работу сервиса соединений
+// OnFinish завершает работу сервиса соединений
 func (s *Service) OnFinish() {
 	close(events)
 }
@@ -136,7 +137,7 @@ func (s *Service) getConf(hostname string) *tls.Config {
 	return conf
 }
 
-// событие создания соединения
+// ConnectionEvent событие создания соединения
 type ConnectionEvent struct {
 	*common.SendEvent
 
@@ -147,7 +148,7 @@ type ConnectionEvent struct {
 	server *MailServer
 
 	// идентификатор заготовщика запросившего поиск информации о почтовом сервисе
-	connectorId int
+	connectorID int
 
 	// адрес, с которого будет отправлено письмо
 	address string
