@@ -77,17 +77,18 @@ func (w Writers) write() {
 // listenMessages подписывает писателей на получение сообщений для логирования
 func (w *Writers) listenMessages(writer Writer) {
 	for message := range messages {
-		w.writeMessage(writer, message)
+		w.writeMessage(writer, message, time.Now().Format(time.StampMicro))
 	}
 }
 
 // writeMessage пишет сообщение в лог
-func (w *Writers) writeMessage(writer Writer, message *Message) {
+func (w *Writers) writeMessage(writer Writer, message *Message, date string) {
 	writer.writeString(
 		fmt.Sprintf(
 			"PostmanQ | %v | %s: %s\n",
 			// time.Now().Format("2006-01-02 15:04:05"),
-			time.Now(),
+			// time.Now().Format(time.StampMicro),
+			date,
 			logLevelByID[message.Level],
 			fmt.Sprintf(message.Message, message.Args...),
 		),
