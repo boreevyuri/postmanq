@@ -66,7 +66,7 @@ receiveConnect:
 		// или клиент разорвал соединение
 		if (targetClient == nil && !event.Queue.HasLimit()) ||
 			(targetClient != nil && targetClient.Status == common.DisconnectedSMTPClientStatus) {
-			logger.Debug("connector#%d-%d can't find free smtp client for %s", c.id, event.Message.ID, mxServer.hostname)
+			logger.Debug("connector#%d-%d can't find free smtp client for %s. Creating new client", c.id, event.Message.ID, mxServer.hostname)
 			c.createSMTPClient(mxServer, event, &targetClient)
 		}
 

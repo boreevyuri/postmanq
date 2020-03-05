@@ -85,10 +85,12 @@ func (m *Mailer) send(event *common.SendEvent) {
 			if err == nil {
 				logger.Debug("mailer#%d-%d send command DATA", m.id, message.ID)
 				_, err = fmt.Fprint(wc, message.Body)
-				if err == nil {
+				if err != nil {
+					logger.Info("mailer#%d-%d got error after send DATA: %+v", m.id, message.ID, err)
+				} else {
 					wc.Close()
 					// logger.Debug("%s", message.Body)
-					logger.Info("here is body")
+					logger.Info("mailer#%d-%d DATA sent successful", m.id, message.ID)
 					logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
 					// стараемся слать письма через уже созданное соединение,
 					// поэтому после отправки письма не закрываем соединение
