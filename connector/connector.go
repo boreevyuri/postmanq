@@ -123,7 +123,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				logger.Debug("connector#%d-%d create client to %s", c.id, event.Message.ID, mxServer.hostname)
 				err = client.Hello(service.Domain)
 				if err == nil {
-					logger.Debug("connector#%d-%d send command HELLO: %s", c.id, event.Message.ID, service.Domain)
+					logger.Debug("connector#%d-%d send command HELO: %s", c.id, event.Message.ID, service.Domain)
 					// проверяем доступно ли TLS
 					if mxServer.useTLS {
 						mxServer.useTLS, _ = client.Extension("STARTTLS")

@@ -96,7 +96,9 @@ func (m *Mailer) send(event *common.SendEvent) {
 					// поэтому после отправки письма не закрываем соединение
 					err = worker.Reset()
 					if err != nil {
-						logger.Debug("mailer#%d-%d unsuccessful RSET. Error: %+v", m.id, message.ID, err)
+						logger.Debug("mailer#%d-%d unsuccessful RSET. Mail body gone! Error: %+v", m.id, message.ID, err)
+						// Если отвалилось на RSET, значит письмо уже ушло.
+						success = true
 					} else {
 						logger.Debug("mailer#%d-%d send command RSET", m.id, message.ID)
 						logger.Info("mailer#%d-%d success send mail#%d", m.id, message.ID, message.ID)
