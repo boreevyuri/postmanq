@@ -145,7 +145,6 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				// ставим лимит очереди, чтобы не пытаться открывать новые соединения и не создавать новые клиенты
 				event.Queue.HasLimitOn()
 				connection.Close()
-				client.Quit()
 				logger.Warn("connector#%d-%d can't create client to %s, err - %v", c.id, event.Message.ID, mxServer.hostname, err)
 			}
 		} else {
