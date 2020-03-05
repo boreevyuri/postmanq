@@ -88,10 +88,18 @@ func (m *Mailer) send(event *common.SendEvent) {
 				if err != nil {
 					logger.Info("mailer#%d-%d got error after send DATA: %+v", m.id, message.ID, err)
 				} else {
-					wc.Close()
-					// logger.Debug("%s", message.Body)
-					logger.Info("mailer#%d-%d DATA sent successful", m.id, message.ID)
-					logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
+					err = wc.Close()
+					if err == nil {
+						// logger.Debug("%s", message.Body)
+						logger.Info("mailer#%d-%d DATA sent successful", m.id, message.ID)
+						logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
+					} else {
+						logger.Info("mailer#%d-%d DATA unsuccessful. Error - %+v", m.id, message.ID, err)
+					}
+					// // logger.Debug("%s", message.Body)
+					// logger.Info("mailer#%d-%d DATA sent successful", m.id, message.ID)
+					// logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
+
 					// стараемся слать письма через уже созданное соединение,
 					// поэтому после отправки письма не закрываем соединение
 					err = worker.Reset()
