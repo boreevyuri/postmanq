@@ -95,7 +95,9 @@ func (m *Mailer) send(event *common.SendEvent) {
 					// стараемся слать письма через уже созданное соединение,
 					// поэтому после отправки письма не закрываем соединение
 					err = worker.Reset()
-					if err == nil {
+					if err != nil {
+						logger.Debug("mailer#%d-%d unsuccessful RSET. Error: %+v", m.id, message.ID, err)
+					} else {
 						logger.Debug("mailer#%d-%d send command RSET", m.id, message.ID)
 						logger.Info("mailer#%d-%d success send mail#%d", m.id, message.ID, message.ID)
 						success = true
