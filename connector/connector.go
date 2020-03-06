@@ -108,6 +108,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(event.address, "0"))
 	if err == nil {
 		logger.Debug("connector#%d-%d resolve tcp address %s", c.id, event.Message.ID, tcpAddr.String())
+
 		dialer := &net.Dialer{
 			Timeout:   common.App.Timeout().Connection,
 			LocalAddr: tcpAddr,
@@ -117,10 +118,12 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 		connection, err := dialer.Dial("tcp", hostname)
 		if err == nil {
 			logger.Debug("connector#%d-%d connect to %s", c.id, event.Message.ID, hostname)
+
 			connection.SetDeadline(time.Now().Add(common.App.Timeout().Hello))
 			client, err := smtp.NewClient(connection, mxServer.hostname)
 			if err == nil {
 				logger.Debug("connector#%d-%d create client to %s", c.id, event.Message.ID, mxServer.hostname)
+
 				err = client.Hello(service.Domain)
 				if err == nil {
 					logger.Debug("connector#%d-%d send command HELO: %s", c.id, event.Message.ID, service.Domain)
@@ -148,6 +151,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				event.Queue.HasLimitOn()
 				connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
+				// event.ReturnMail(event, err)
 			}
 		} else {
 			// если не удалось установить соединение,
