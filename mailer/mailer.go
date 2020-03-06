@@ -71,6 +71,7 @@ func (m *Mailer) send(event *common.SendEvent) {
 	logger.Debug("mailer#%d-%d receive smtp client#%d", m.id, message.ID, event.Client.ID)
 
 	success := false
+	var sendErr error = nil
 	event.Client.SetTimeout(common.App.Timeout().Mail)
 	err := worker.Mail(message.Envelope)
 	if err == nil {
@@ -102,21 +103,27 @@ func (m *Mailer) send(event *common.SendEvent) {
 							success = true
 						} else {
 							logger.Info("mailer#%d-%d error after RSET. Error: %+v", m.id, message.ID, err)
+							sendErr = err
 						}
 					} else {
 						logger.Info("mailer#%d-%d error after sent body. Error: %+v", m.id, message.ID, err)
+						sendErr = err
 					}
 				} else {
 					logger.Info("mailer#%d-%d error during body send. Error: %+v", m.id, message.ID, err)
+					sendErr = err
 				}
 			} else {
 				logger.Info("mailer#%d-%d error after DATA. Error: %+v", m.id, message.ID, err)
+				sendErr = err
 			}
 		} else {
 			logger.Info("mailer#%d-%d error after RCPT TO. Error: %+v", m.id, message.ID, err)
+			sendErr = err
 		}
 	} else {
 		logger.Info("mailer#%d-%d error after MAIL FROM. Error: %+v", m.id, message.ID, err)
+		sendErr = err
 	}
 
 	event.Client.Wait()
@@ -126,6 +133,6 @@ func (m *Mailer) send(event *common.SendEvent) {
 		// отпускаем поток получателя сообщений из очереди
 		event.Result <- common.SuccessSendEventResult
 	} else {
-		common.ReturnMail(event, err)
+		common.ReturnMail(event, sendErr)
 	}
 }
