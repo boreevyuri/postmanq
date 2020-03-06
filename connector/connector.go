@@ -124,11 +124,13 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				err = client.Hello(service.Domain)
 				if err == nil {
 					logger.Debug("connector#%d-%d send command HELO: %s", c.id, event.Message.ID, service.Domain)
+
 					// проверяем доступно ли TLS
 					if mxServer.useTLS {
 						mxServer.useTLS, _ = client.Extension("STARTTLS")
 					}
 					logger.Debug("connector#%d-%d use TLS %v", c.id, event.Message.ID, mxServer.useTLS)
+
 					// создаем TLS или обычное соединение
 					if mxServer.useTLS {
 						c.initTLSSMTPClient(mxServer, event, ptrSMTPClient, connection, client)
@@ -137,7 +139,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 					}
 				} else {
 					client.Quit()
-					logger.Debug("connector#%d-%d can't create client to %s, err - %v", c.id, event.Message.ID, mxServer.hostname, err)
+					logger.Debug("connector#%d-%d can't create client to %s Error: %+v", c.id, event.Message.ID, mxServer.hostname, err)
 				}
 			} else {
 				// если не удалось создать клиента,
@@ -145,17 +147,17 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				// ставим лимит очереди, чтобы не пытаться открывать новые соединения и не создавать новые клиенты
 				event.Queue.HasLimitOn()
 				connection.Close()
-				logger.Warn("connector#%d-%d can't create client to %s, err - %v", c.id, event.Message.ID, mxServer.hostname, err)
+				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
 			}
 		} else {
 			// если не удалось установить соединение,
 			// возможно, на почтовом сервисе стоит ограничение на количество соединений
 			// ставим лимит очереди, чтобы не пытаться открывать новые соединения
 			event.Queue.HasLimitOn()
-			logger.Warn("connector#%d-%d can't dial to %s, err - %v", c.id, event.Message.ID, hostname, err)
+			logger.Warn("connector#%d-%d can't dial to %s, err - %+v", c.id, event.Message.ID, hostname, err)
 		}
 	} else {
-		logger.Warn("connector#%d-%d can't resolve tcp address %s, err - %v", c.id, event.Message.ID, tcpAddr.String(), err)
+		logger.Warn("connector#%d-%d can't resolve tcp address %s, err - %+v", c.id, event.Message.ID, tcpAddr.String(), err)
 	}
 }
 
