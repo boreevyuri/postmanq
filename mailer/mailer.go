@@ -66,55 +66,57 @@ func (m *Mailer) prepare(message *common.MailMessage) {
 func (m *Mailer) send(event *common.SendEvent) {
 	message := event.Message
 	worker := event.Client.Worker
+
 	logger.Info("mailer#%d-%d begin sending mail", m.id, message.ID)
 	logger.Debug("mailer#%d-%d receive smtp client#%d", m.id, message.ID, event.Client.ID)
 
 	success := false
 	event.Client.SetTimeout(common.App.Timeout().Mail)
 	err := worker.Mail(message.Envelope)
-	if err != nil {
-		logger.Debug("mailer#%d-%d got error from SMTPClient: %+v", m.id, message.ID, err)
-	} else {
-		logger.Debug("mailer#%d-%d send command MAIL FROM: %s", m.id, message.ID, message.Envelope)
+	if err == nil {
+		logger.Debug("mailer#%d-%d sent command MAIL FROM: %s", m.id, message.ID, message.Envelope)
+
 		event.Client.SetTimeout(common.App.Timeout().Rcpt)
 		err = worker.Rcpt(message.Recipient)
 		if err == nil {
-			logger.Debug("mailer#%d-%d send command RCPT TO: %s", m.id, message.ID, message.Recipient)
+			logger.Debug("mailer#%d-%d sent command RCPT TO: %s", m.id, message.ID, message.Recipient)
+
 			event.Client.SetTimeout(common.App.Timeout().Data)
 			wc, err := worker.Data()
 			if err == nil {
-				logger.Debug("mailer#%d-%d send command DATA", m.id, message.ID)
+				logger.Debug("mailer#%d-%d sent command DATA", m.id, message.ID)
+
 				_, err = fmt.Fprint(wc, message.Body)
-				if err != nil {
-					logger.Info("mailer#%d-%d got error after send DATA: %+v", m.id, message.ID, err)
-				} else {
+				if err == nil {
 					err = wc.Close()
 					if err == nil {
 						// logger.Debug("%s", message.Body)
-						logger.Info("mailer#%d-%d DATA sent successful", m.id, message.ID)
-						logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
-					} else {
-						logger.Info("mailer#%d-%d DATA unsuccessful. Error - %+v", m.id, message.ID, err)
-					}
-					// // logger.Debug("%s", message.Body)
-					// logger.Info("mailer#%d-%d DATA sent successful", m.id, message.ID)
-					// logger.Debug("mailer#%d-%d send command .", m.id, message.ID)
+						logger.Debug("mailer#%d-%d body sent successful. Sent command . ", m.id, message.ID)
 
-					// стараемся слать письма через уже созданное соединение,
-					// поэтому после отправки письма не закрываем соединение
-					err = worker.Reset()
-					if err != nil {
-						logger.Debug("mailer#%d-%d unsuccessful RSET. Mail body gone! Error: %+v", m.id, message.ID, err)
-						// Если отвалилось на RSET, значит письмо уже ушло. Ошибочно...
-						// success = true
+						// Успешная отправка. Не закрываем соединение, но отсылаем RSET.
+						err = worker.Reset()
+						if err == nil {
+							logger.Debug("mailer#%d-%d sent command RSET", m.id, message.ID)
+							logger.Info("mailer#%d-%d success send mail for %s", m.id, message.ID, message.Recipient)
+
+							success = true
+						} else {
+							logger.Info("mailer#%d-%d error after RSET. Error: %+v", m.id, message.ID, err)
+						}
 					} else {
-						logger.Debug("mailer#%d-%d send command RSET", m.id, message.ID)
-						logger.Info("mailer#%d-%d success send mail#%d", m.id, message.ID, message.ID)
-						success = true
+						logger.Info("mailer#%d-%d error after sent body. Error: %+v", m.id, message.ID, err)
 					}
+				} else {
+					logger.Info("mailer#%d-%d error during body send. Error: %+v", m.id, message.ID, err)
 				}
+			} else {
+				logger.Info("mailer#%d-%d error after DATA. Error: %+v", m.id, message.ID, err)
 			}
+		} else {
+			logger.Info("mailer#%d-%d error after RCPT TO. Error: %+v", m.id, message.ID, err)
 		}
+	} else {
+		logger.Info("mailer#%d-%d error after MAIL FROM. Error: %+v", m.id, message.ID, err)
 	}
 
 	event.Client.Wait()
