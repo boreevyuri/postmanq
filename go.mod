@@ -1,6 +1,6 @@
 module github.com/boreevyuri/postmanq
 
-go 1.12
+go 1.14
 
 require (
 	github.com/boreevyuri/clitable v0.0.0-20150722055417-9f60651b8308
