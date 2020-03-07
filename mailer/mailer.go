@@ -27,7 +27,7 @@ func (m *Mailer) run() {
 	}
 }
 
-// подписывает dkim и отправляет письмо
+// sendMail вписывает dkim и отправляет письмо
 func (m *Mailer) sendMail(event *common.SendEvent) {
 	message := event.Message
 	if common.EmailRegexp.MatchString(message.Envelope) && common.EmailRegexp.MatchString(message.Recipient) {
@@ -39,7 +39,7 @@ func (m *Mailer) sendMail(event *common.SendEvent) {
 	}
 }
 
-// подписывает dkim
+// prepare создает dkim-подпись и добавляет заголовок Dkim в письмо
 func (m *Mailer) prepare(message *common.MailMessage) {
 	conf, err := dkim.NewConf(message.HostnameFrom, service.DkimSelector)
 	if err == nil {
@@ -62,7 +62,7 @@ func (m *Mailer) prepare(message *common.MailMessage) {
 	}
 }
 
-// отправляет письмо
+// send отправляет письмо
 func (m *Mailer) send(event *common.SendEvent) {
 	message := event.Message
 	worker := event.Client.Worker

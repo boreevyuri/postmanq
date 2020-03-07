@@ -47,12 +47,13 @@ type Service struct {
 	// путь до файла с сертификатом
 	CertFilename string `yaml:"certificate"`
 
-	// ip с которых будем рассылать письма
+	// IP-адреса с которых будем рассылать письма
 	Addresses []string `yaml:"ips"`
 
+	// TODO: рассмотреть, зачем он тут
 	Domain string `yaml:"domain"`
 
-	// количество ip
+	// количество IP-адресов
 	addressesLen int
 
 	pool *x509.CertPool
@@ -96,7 +97,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 		if s.Domain == common.InvalidInputString {
 			logger.FailExit("domain should be defined")
 		}
-		if s.ConnectorsCount == 0 {
+		if s.ConnectorsCount <= 0 {
 			s.ConnectorsCount = common.DefaultWorkersCount
 		}
 	} else {
