@@ -50,7 +50,7 @@ type Service struct {
 	// IP-адреса с которых будем рассылать письма
 	Addresses []string `yaml:"ips"`
 
-	// TODO: рассмотреть, зачем он тут
+	// Домен с которого будет отправляться почта
 	Domain string `yaml:"domain"`
 
 	// количество IP-адресов

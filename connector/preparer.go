@@ -1,6 +1,7 @@
 package connector
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -39,6 +40,8 @@ func (p *Preparer) prepare(event *common.SendEvent) {
 	}
 	goto connectToMailServer
 
+	// seekerEvents - канал seeker-а
+	// connectorEvents - канал connector-а
 connectToMailServer:
 	// отправляем событие сбора информации о сервере
 	seekerEvents <- connectionEvent
@@ -52,8 +55,8 @@ connectToMailServer:
 	case ErrorMailServerStatus:
 		common.ReturnMail(
 			event,
-			// errors.New(fmt.Sprintf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.Id, event.Message.HostnameTo)),
-			fmt.Errorf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.ID, event.Message.HostnameTo),
+			errors.New(fmt.Sprintf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.ID, event.Message.HostnameTo)),
+			//fmt.Errorf("511 preparer#%d-%d can't lookup %s", p.id, event.Message.ID, event.Message.HostnameTo),
 		)
 	}
 	return
@@ -62,5 +65,4 @@ waitLookup:
 	logger.Debug("preparer#%d-%d wait ending look up mail server %s...", p.id, event.Message.ID, event.Message.HostnameTo)
 	time.Sleep(common.App.Timeout().Sleep)
 	goto connectToMailServer
-	// return
 }

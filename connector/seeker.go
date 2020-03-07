@@ -41,7 +41,7 @@ func (s *Seeker) seek(event *ConnectionEvent) {
 	// добавляем новый почтовый домен
 	seekerMutex.Lock()
 	if _, ok := mailServers[hostnameTo]; !ok {
-		logger.Debug("seeker#%d-%d create mail server for %s", event.connectorID, event.Message.ID, hostnameTo)
+		logger.Debug("seeker#%d-%d lookup mail server for %s", event.connectorID, event.Message.ID, hostnameTo)
 		mailServers[hostnameTo] = &MailServer{
 			status:      LookupMailServerStatus,
 			connectorID: event.connectorID,
