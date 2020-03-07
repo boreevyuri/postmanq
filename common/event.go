@@ -58,7 +58,7 @@ const (
 	// OverlimitSendEventResult превышение лимита
 	OverlimitSendEventResult
 
-	// ErrorSendEventResult ошибка
+	// ErrorSendEventResult ошибка отправки
 	ErrorSendEventResult
 
 	// DelaySendEventResult повторная отправка через некоторое время
