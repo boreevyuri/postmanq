@@ -32,28 +32,28 @@ type MailServer struct {
 	status MailServerStatus
 }
 
-// MxServer почтовый сервер
+// MxServer найденный seeker-ом почтовый сервер получателя
 type MxServer struct {
-	// доменное имя почтового сервера
+	// доменное имя почтового сервера получателя
 	hostname string
 
-	// ip сервера
+	// IP-адреса сервера получателя
 	ips []net.IP
 
 	// клиенты сервера
 	clients []*common.SMTPClient
 
-	// А запись сервера
+	// PTR запись сервера получателя
 	realServerName string
 
-	// использоватение TLS
+	// использует ли сервер получателя TLS
 	useTLS bool
 
-	// очередь клиентов
+	// очередь клиентов к серверу получателя
 	queues map[string]*common.LimitedQueue
 }
 
-// создает новый почтовый сервер
+// newMxServer добавляет в карту новый почтовый сервер получателя
 func newMxServer(hostname string) *MxServer {
 	queues := make(map[string]*common.LimitedQueue)
 	for _, address := range service.Addresses {

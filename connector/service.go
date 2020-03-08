@@ -153,4 +153,7 @@ type ConnectionEvent struct {
 
 	// адрес, с которого будет отправлено письмо
 	address string
+
+	// Маскимальное количество команд, отправленные в одно соединение (спасибо Mail.ru)
+	maxSMTPCommands int
 }

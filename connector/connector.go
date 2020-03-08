@@ -16,7 +16,7 @@ var (
 
 // Connector устанавливает соединение к почтовому сервису
 type Connector struct {
-	// Идентификатор для логов
+	// Идентификатор коннектора (для лога)
 	id int
 }
 
@@ -35,7 +35,7 @@ func (c *Connector) run() {
 
 // устанавливает соединение к почтовому сервису
 func (c *Connector) connect(event *ConnectionEvent) {
-	logger.Debug("connector#%d-%d try find connection", c.id, event.Message.ID)
+	logger.Debug("connector#%d-%d try to find existing connection", c.id, event.Message.ID)
 	goto receiveConnect
 
 receiveConnect:
