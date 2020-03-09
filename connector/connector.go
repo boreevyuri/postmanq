@@ -1,6 +1,7 @@
 package connector
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -46,18 +47,17 @@ receiveConnect:
 	for _, mxServer := range event.server.mxServers {
 		logger.Debug("connector#%d-%d try to receive connection for %s", c.id, event.Message.ID, mxServer.hostname)
 
-		// пробуем получить клиента
+		// пробуем получить клиента из очереди
 		event.Queue, _ = mxServer.queues[event.address]
 		client := event.Queue.Pop()
 		if client != nil {
 			targetClient = client.(*common.SMTPClient)
-			logger.Debug("connector#%d-%d found free smtp client#%d", c.id, event.Message.ID, targetClient.ID)
+			logger.Debug("connector#%d-%d found free SMTP client#%d", c.id, event.Message.ID, targetClient.ID)
 			logger.Debug("connector#%d-%d check connection to %s smtp client#%d", c.id, event.Message.ID, event.address, targetClient.ID)
 			err := targetClient.Worker.Noop()
 			if err != nil {
-				logger.Debug("connector#%d-%d smtp connector is dead client#%d", c.id, event.Message.ID, targetClient.ID)
+				logger.Debug("connector#%d-%d SMTPClient#%d is dead. Closing...", c.id, event.Message.ID, targetClient.ID)
 				targetClient.Close()
-				// targetClient = nil
 			}
 		}
 
@@ -91,8 +91,8 @@ waitConnect:
 	if event.TryCount >= common.MaxTryConnectionCount {
 		common.ReturnMail(
 			event.SendEvent,
-			// errors.New(fmt.Sprintf("connector#%d can't connect to %s", c.id, event.Message.HostnameTo)),
-			fmt.Errorf("connector#%d can't connect to %s", c.id, event.Message.HostnameTo),
+			errors.New(fmt.Sprintf("connector#%d can't connect to %s", c.id, event.Message.HostnameTo)),
+			//fmt.Errorf("connector#%d can't connect to %s", c.id, event.Message.HostnameTo),
 		)
 	} else {
 		logger.Debug("connector#%d-%d can't find free connections, wait...", c.id, event.Message.ID)
