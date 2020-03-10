@@ -119,7 +119,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 		if err == nil {
 			logger.Debug("connector#%d-%d connect to %s", c.id, event.Message.ID, hostname)
 
-			connection.SetDeadline(time.Now().Add(common.App.Timeout().Hello))
+			_ = connection.SetDeadline(time.Now().Add(common.App.Timeout().Hello))
 			client, err := smtp.NewClient(connection, mxServer.hostname)
 			if err == nil {
 				logger.Debug("connector#%d-%d create client to %s", c.id, event.Message.ID, mxServer.hostname)
@@ -141,7 +141,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 						c.initSMTPClient(mxServer, event, ptrSMTPClient, connection, client)
 					}
 				} else {
-					client.Quit()
+					_ = client.Quit()
 					logger.Debug("connector#%d-%d can't create client to %s Error: %+v", c.id, event.Message.ID, mxServer.hostname, err)
 				}
 			} else {
@@ -149,7 +149,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				// возможно, на почтовом сервисе стоит ограничение на количество активных клиентов
 				// ставим лимит очереди, чтобы не пытаться открывать новые соединения и не создавать новые клиенты
 				event.Queue.HasLimitOn()
-				connection.Close()
+				_ = connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
 				// возвращаем письмо в очередь с ошибкой.
 				common.ReturnMail(event.SendEvent, err)
@@ -182,7 +182,7 @@ func (c *Connector) initTLSSMTPClient(mxServer *MxServer, event *ConnectionEvent
 			// разрываем созданое соединение
 			// это необходимо, т.к. не все почтовые сервисы позволяют продолжить отправку письма
 			// после неудачной попытке создать TLS соединение
-			client.Quit()
+			_ = client.Quit()
 			// создаем обычное соединие
 			c.createSMTPClient(mxServer, event, ptrSMTPClient)
 
