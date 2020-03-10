@@ -151,6 +151,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				event.Queue.HasLimitOn()
 				connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
+				// возвращаем письмо в очередь с ошибкой.
 				common.ReturnMail(event.SendEvent, err)
 			}
 		} else {

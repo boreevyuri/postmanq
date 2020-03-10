@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"github.com/boreevyuri/postmanq/logger"
 	"regexp"
 	"strconv"
 	"strings"
@@ -164,6 +165,7 @@ func ReturnMail(event *SendEvent, err error) {
 		if len(parts) > 0 {
 			// пытаемся получить код
 			code, e := strconv.Atoi(strings.TrimSpace(parts[0]))
+			logger.Warn("ReturnMail catch error %v", code)
 			// и создать ошибку
 			// письмо с ошибкой вернется в другую очередь, отличную от письмо без ошибки
 			if e == nil {
@@ -176,7 +178,7 @@ func ReturnMail(event *SendEvent, err error) {
 	if event.Client != nil {
 		if event.Client.Worker != nil {
 			// сбрасываем цепочку команд к почтовому сервису
-			event.Client.Worker.Reset()
+			_ = event.Client.Worker.Reset()
 		}
 	}
 
