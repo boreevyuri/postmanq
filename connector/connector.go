@@ -104,10 +104,10 @@ waitConnect:
 
 // создает соединение к почтовому сервису
 func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient) {
-	// устанавливаем ip, с которого будем отсылать письмо
+	// определяем IP, с которого будет устанавливаться соединение
 	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(event.address, "0"))
 	if err == nil {
-		logger.Debug("connector#%d-%d resolve tcp address %s", c.id, event.Message.ID, tcpAddr.String())
+		logger.Debug("connector#%d-%d binds on tcp address %s", c.id, event.Message.ID, tcpAddr.String())
 
 		dialer := &net.Dialer{
 			Timeout:   common.App.Timeout().Connection,
@@ -151,7 +151,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				event.Queue.HasLimitOn()
 				connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
-				// event.ReturnMail(event, err)
+				common.ReturnMail(event.SendEvent, err)
 			}
 		} else {
 			// если не удалось установить соединение,
