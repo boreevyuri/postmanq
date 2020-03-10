@@ -67,6 +67,7 @@ receiveConnect:
 		if (targetClient == nil && !event.Queue.HasLimit()) ||
 			(targetClient != nil && targetClient.Status == common.DisconnectedSMTPClientStatus) {
 			logger.Debug("connector#%d-%d can't find free smtp client for %s. Creating new client", c.id, event.Message.ID, mxServer.hostname)
+			// TODO: проверять возврат ошибки и не делать коннект по новой
 			c.createSMTPClient(mxServer, event, &targetClient)
 		}
 
@@ -103,6 +104,7 @@ waitConnect:
 }
 
 // создает соединение к почтовому сервису
+// TODO: возвращать ошибку при неудачном создании клиента
 func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient) {
 	// определяем IP, с которого будет устанавливаться соединение
 	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(event.address, "0"))
@@ -110,10 +112,12 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 		logger.Debug("connector#%d-%d binds on tcp address %s", c.id, event.Message.ID, tcpAddr.String())
 
 		dialer := &net.Dialer{
-			Timeout:   common.App.Timeout().Connection,
-			LocalAddr: tcpAddr,
+			Timeout: common.App.Timeout().Connection,
+			// turn off for docker
+			//LocalAddr: tcpAddr,
 		}
 		hostname := net.JoinHostPort(mxServer.hostname, "25")
+		//hostname := net.JoinHostPort("127.0.0.1", "1025")
 		// создаем соединение к почтовому сервису
 		connection, err := dialer.Dial("tcp", hostname)
 		if err == nil {
@@ -149,7 +153,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				// возможно, на почтовом сервисе стоит ограничение на количество активных клиентов
 				// ставим лимит очереди, чтобы не пытаться открывать новые соединения и не создавать новые клиенты
 				event.Queue.HasLimitOn()
-				connection.Close()
+				_ = connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
 				// возвращаем письмо в очередь с ошибкой.
 				common.ReturnMail(event.SendEvent, err)
@@ -160,6 +164,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 			// ставим лимит очереди, чтобы не пытаться открывать новые соединения
 			event.Queue.HasLimitOn()
 			logger.Warn("connector#%d-%d can't dial to %s, err - %+v", c.id, event.Message.ID, hostname, err)
+			common.ReturnMail(event.SendEvent, err)
 		}
 	} else {
 		logger.Warn("connector#%d-%d can't resolve tcp address %s, err - %+v", c.id, event.Message.ID, tcpAddr.String(), err)
