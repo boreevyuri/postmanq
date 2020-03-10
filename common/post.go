@@ -2,7 +2,6 @@ package common
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -165,7 +164,6 @@ func ReturnMail(event *SendEvent, err error) {
 		if len(parts) > 0 {
 			// пытаемся получить код
 			code, e := strconv.Atoi(strings.TrimSpace(parts[0]))
-			errors.New(fmt.Sprintf("ReturnMail catch error - %v", code))
 			// и создать ошибку
 			// письмо с ошибкой вернется в другую очередь, отличную от письмо без ошибки
 			if e == nil {

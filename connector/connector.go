@@ -149,7 +149,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				// возможно, на почтовом сервисе стоит ограничение на количество активных клиентов
 				// ставим лимит очереди, чтобы не пытаться открывать новые соединения и не создавать новые клиенты
 				event.Queue.HasLimitOn()
-				_ = connection.Close()
+				connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
 				// возвращаем письмо в очередь с ошибкой.
 				common.ReturnMail(event.SendEvent, err)
