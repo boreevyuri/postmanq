@@ -27,11 +27,11 @@ func (m *Mailer) run() {
 	}
 }
 
-// sendMail вписывает dkim и отправляет письмо
+// sendMail вписывает dkim и отправляет письмо в созданное ранее соединение
 func (m *Mailer) sendMail(event *common.SendEvent) {
 	message := event.Message
 	if common.EmailRegexp.MatchString(message.Envelope) && common.EmailRegexp.MatchString(message.Recipient) {
-		m.prepare(message)
+		m.signWithDKIM(message)
 		m.send(event)
 	} else {
 		// common.ReturnMail(event, errors.New(fmt.Sprintf("511 service#%d can't send mail#%d, envelope or ricipient is invalid", m.id, message.ID)))
@@ -39,24 +39,24 @@ func (m *Mailer) sendMail(event *common.SendEvent) {
 	}
 }
 
-// prepare создает dkim-подпись и добавляет заголовок Dkim в письмо
-func (m *Mailer) prepare(message *common.MailMessage) {
+// signWithDKIM создает dkim-подпись и добавляет заголовок Dkim в письмо
+func (m *Mailer) signWithDKIM(message *common.MailMessage) {
 	conf, err := dkim.NewConf(message.HostnameFrom, service.DkimSelector)
 	if err == nil {
 		conf[dkim.AUIDKey] = message.Envelope
 		conf[dkim.CanonicalizationKey] = "relaxed/relaxed"
 		signer := dkim.NewByKey(conf, service.privateKey)
+		//if err == nil {
+		signed, err := signer.Sign([]byte(message.Body))
 		if err == nil {
-			signed, err := signer.Sign([]byte(message.Body))
-			if err == nil {
-				message.Body = string(signed)
-				logger.Debug("mailer#%d-%d success sign mail", m.id, message.ID)
-			} else {
-				logger.Warn("mailer#%d-%d can't sign mail, error - %v", m.id, message.ID, err)
-			}
+			message.Body = string(signed)
+			logger.Debug("mailer#%d-%d success sign mail", m.id, message.ID)
 		} else {
-			logger.Warn("mailer#%d-%d can't create dkim signer, error - %v", m.id, message.ID, err)
+			logger.Warn("mailer#%d-%d can't sign mail, error - %v", m.id, message.ID, err)
 		}
+		//} else {
+		//	logger.Warn("mailer#%d-%d can't create dkim signer, error - %v", m.id, message.ID, err)
+		//}
 	} else {
 		logger.Warn("mailer#%d-%d can't create dkim config, error - %v", m.id, message.ID, err)
 	}
