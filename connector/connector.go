@@ -42,7 +42,7 @@ func (c *Connector) connect(event *ConnectionEvent) {
 receiveConnect:
 	event.TryCount++
 	var targetClient *common.SMTPClient
-
+	var smtpError error = nil
 	// смотрим все mx сервера почтового сервиса
 	for _, mxServer := range event.server.mxServers {
 		logger.Debug("connector#%d-%d try to receive connection for %s", c.id, event.Message.ID, mxServer.hostname)
@@ -68,7 +68,7 @@ receiveConnect:
 			(targetClient != nil && targetClient.Status == common.DisconnectedSMTPClientStatus) {
 			logger.Debug("connector#%d-%d can't find free smtp client for %s. Creating new client", c.id, event.Message.ID, mxServer.hostname)
 			// TODO: проверять возврат ошибки и не делать коннект по новой
-			c.createSMTPClient(mxServer, event, &targetClient)
+			smtpError = c.createSMTPClient(mxServer, event, &targetClient)
 		}
 
 		if targetClient != nil {
@@ -89,7 +89,13 @@ receiveConnect:
 	return
 
 waitConnect:
-	if event.TryCount >= common.MaxTryConnectionCount {
+	// Если targetClient не создался, а createSMTPClient вернул ошибку - похоже мы встряли.
+	if targetClient == nil && smtpError != nil {
+		common.ReturnMail(
+			event.SendEvent,
+			smtpError,
+		)
+	} else if event.TryCount >= common.MaxTryConnectionCount {
 		common.ReturnMail(
 			event.SendEvent,
 			errors.New(fmt.Sprintf("connector#%d can't connect to %s", c.id, event.Message.HostnameTo)),
@@ -105,7 +111,7 @@ waitConnect:
 
 // создает соединение к почтовому сервису
 // TODO: возвращать ошибку при неудачном создании клиента
-func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient) {
+func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient) error {
 	// определяем IP, с которого будет устанавливаться соединение
 	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(event.address, "0"))
 	if err == nil {
@@ -114,7 +120,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 		dialer := &net.Dialer{
 			Timeout: common.App.Timeout().Connection,
 			// turn off for docker
-			//LocalAddr: tcpAddr,
+			LocalAddr: tcpAddr,
 		}
 		hostname := net.JoinHostPort(mxServer.hostname, "25")
 		//hostname := net.JoinHostPort("127.0.0.1", "1025")
@@ -146,7 +152,8 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 					}
 				} else {
 					_ = client.Quit()
-					logger.Debug("connector#%d-%d can't create client to %s Error: %+v", c.id, event.Message.ID, mxServer.hostname, err)
+					logger.Warn("connector#%d-%d can't create client to %s Error: %+v", c.id, event.Message.ID, mxServer.hostname, err)
+					return err
 				}
 			} else {
 				// если не удалось создать клиента,
@@ -155,8 +162,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 				event.Queue.HasLimitOn()
 				_ = connection.Close()
 				logger.Warn("connector#%d-%d can't create client to %s Error: %v", c.id, event.Message.ID, mxServer.hostname, err)
-				// возвращаем письмо в очередь с ошибкой.
-				common.ReturnMail(event.SendEvent, err)
+				return err
 			}
 		} else {
 			// если не удалось установить соединение,
@@ -164,11 +170,12 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 			// ставим лимит очереди, чтобы не пытаться открывать новые соединения
 			event.Queue.HasLimitOn()
 			logger.Warn("connector#%d-%d can't dial to %s, err - %+v", c.id, event.Message.ID, hostname, err)
-			common.ReturnMail(event.SendEvent, err)
+			return fmt.Errorf("111 %+v", err)
 		}
 	} else {
 		logger.Warn("connector#%d-%d can't resolve tcp address %s, err - %+v", c.id, event.Message.ID, tcpAddr.String(), err)
 	}
+	return nil
 }
 
 // открывает защищенное соединение
@@ -189,7 +196,7 @@ func (c *Connector) initTLSSMTPClient(mxServer *MxServer, event *ConnectionEvent
 			// после неудачной попытке создать TLS соединение
 			_ = client.Quit()
 			// создаем обычное соединие
-			c.createSMTPClient(mxServer, event, ptrSMTPClient)
+			_ = c.createSMTPClient(mxServer, event, ptrSMTPClient)
 
 			logger.Warn("connector#%d-%d can't start tls err - %v", c.id, event.Message.ID, err)
 		}
