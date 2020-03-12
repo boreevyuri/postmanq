@@ -22,17 +22,17 @@ var (
 
 // Consumer получатель сообщений из очереди
 type Consumer struct {
-	id         int
-	connect    *amqp.Connection
-	binding    *Binding
-	deliveries <-chan amqp.Delivery
+	id             int
+	amqpConnection *amqp.Connection
+	binding        *Binding
+	deliveries     <-chan amqp.Delivery
 }
 
 // NewConsumer создает нового получателя
-func NewConsumer(id int, connect *amqp.Connection, binding *Binding) *Consumer {
+func NewConsumer(id int, amqpConnection *amqp.Connection, binding *Binding) *Consumer {
 	app := new(Consumer)
 	app.id = id
-	app.connect = connect
+	app.amqpConnection = amqpConnection
 	app.binding = binding
 	return app
 }
@@ -44,27 +44,32 @@ func (c *Consumer) run() {
 	}
 }
 
-// подключается к очереди для получения сообщений
+// consume подключается к очереди для получения сообщений
 func (c *Consumer) consume(id int) {
-	channel, err := c.connect.Channel()
-	// выбираем из очереди сообщения с запасом
-	// это нужно для того, чтобы после отправки письма новое уже было готово к отправке
-	// в тоже время нельзя выбираеть все сообщения из очереди разом, т.к. можно упереться в память
-	channel.Qos(c.binding.PrefetchCount, 0, false)
-	deliveries, err := channel.Consume(
-		c.binding.Queue, // name
-		"",              // consumerTag,
-		false,           // noAck
-		false,           // exclusive
-		false,           // noLocal
-		false,           // noWait
-		nil,             // arguments
-	)
+	channel, err := c.amqpConnection.Channel()
 	if err == nil {
-		go c.consumeDeliveries(id, channel, deliveries)
+		// выбираем из очереди сообщения с запасом
+		// это нужно для того, чтобы после отправки письма новое уже было готово к отправке
+		// в тоже время нельзя выбирать все сообщения из очереди разом, т.к. можно упереться в память
+		_ = channel.Qos(c.binding.PrefetchCount, 0, false)
+		deliveries, err := channel.Consume(
+			c.binding.Queue, // name
+			"",              // consumerTag,
+			false,           // noAck
+			false,           // exclusive
+			false,           // noLocal
+			false,           // noWait
+			nil,             // arguments
+		)
+		if err == nil {
+			go c.consumeDeliveries(id, channel, deliveries)
+		} else {
+			logger.Warn("consumer#%d, handler#%d can't consume queue %s", c.id, id, c.binding.Queue)
+		}
 	} else {
-		logger.Warn("consumer#%d, handler#%d can't consume queue %s", c.id, id, c.binding.Queue)
+		logger.Warn("consumer#%d, handler#%d can't find channel %s", c.id, id, c.binding.Queue)
 	}
+
 }
 
 // получает сообщения из очереди и отправляет их другим сервисам
@@ -76,7 +81,7 @@ func (c *Consumer) consumeDeliveries(id int, channel *amqp.Channel, deliveries <
 			// инициализируем параметры письма
 			message.Init()
 			logger.Info(
-				"consumer#%d-%d, handler#%d send mail#%d: envelope - %s, recipient - %s to mailer",
+				"consumer#%d-%d, handler#%d got mail#%d: envelope - %s, recipient - %s from queue",
 				c.id,
 				message.ID,
 				id,
@@ -86,7 +91,7 @@ func (c *Consumer) consumeDeliveries(id int, channel *amqp.Channel, deliveries <
 			)
 
 			event := common.NewSendEvent(message)
-			logger.Debug("consumer#%d-%d send event", c.id, message.ID)
+			logger.Debug("consumer#%d-%d created new send event", c.id, message.ID)
 			event.Iterator.Next().(common.SendingService).Events() <- event
 			// ждем результата,
 			// во время ожидания поток блокируется
@@ -114,7 +119,10 @@ func (c *Consumer) consumeDeliveries(id int, channel *amqp.Channel, deliveries <
 		// всегда подтверждаем получение сообщения
 		// даже если во время отправки письма возникли ошибки,
 		// мы уже положили это письмо в другую очередь
-		delivery.Ack(true)
+		err = delivery.Ack(true)
+		if err != nil {
+			logger.Warn("consumer#%d couldn't ACK message", c.id)
+		}
 	}
 }
 
@@ -245,13 +253,13 @@ func (c *Consumer) publishDelayedMessage(channel *amqp.Channel, bindingType comm
 			logger.Warn("consumer#%d-%d can't marshal mail to json", c.id, message.ID)
 		}
 	} else {
-		logger.Warn("consumer#%d-%d unknow delayed type#%v", c.id, message.ID, bindingType)
+		logger.Warn("consumer#%d-%d unknown delayed type#%v", c.id, message.ID, bindingType)
 	}
 }
 
 // получает письма из всех очередей с ошибками
 func (c *Consumer) consumeFailureMessages(group *sync.WaitGroup) {
-	channel, err := c.connect.Channel()
+	channel, err := c.amqpConnection.Channel()
 	if err == nil {
 		for _, failureBinding := range c.binding.failureBindings {
 			for {
@@ -276,7 +284,7 @@ func (c *Consumer) consumeFailureMessages(group *sync.WaitGroup) {
 
 // получает сообщения из одной очереди и кладет их в другую
 func (c *Consumer) consumeAndPublishMessages(event *common.ApplicationEvent, group *sync.WaitGroup) {
-	channel, err := c.connect.Channel()
+	channel, err := c.amqpConnection.Channel()
 	if err == nil {
 		var envelopeRegex, recipientRegex *regexp.Regexp
 		srcBinding := c.findBindingByQueueName(event.GetStringArg("srcQueue"))

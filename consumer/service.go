@@ -25,7 +25,7 @@ type Service struct {
 	Configs []*Config `yaml:"consumers"`
 
 	// подключения к очередям
-	connections map[string]*amqp.Connection
+	amqpConnections map[string]*amqp.Connection
 
 	// подписчики на сообщения из очереди
 	consumers map[string][]*Consumer
@@ -35,7 +35,7 @@ type Service struct {
 func Inst() common.SendingService {
 	if service == nil {
 		service := new(Service)
-		service.connections = make(map[string]*amqp.Connection)
+		service.amqpConnections = make(map[string]*amqp.Connection)
 		service.consumers = make(map[string][]*Consumer)
 		return service
 	}
@@ -50,11 +50,11 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	if err == nil {
 		appsCount := 0
 		for _, config := range s.Configs {
-			connect, err := amqp.Dial(config.URI)
+			amqpConnection, err := amqp.Dial(config.URI)
 			if err == nil {
-				channel, err := connect.Channel()
+				channel, err := amqpConnection.Channel()
 				if err == nil {
-					apps := make([]*Consumer, len(config.Bindings))
+					consumerApps := make([]*Consumer, len(config.Bindings))
 					for i, binding := range config.Bindings {
 						binding.init()
 						// объявляем очередь
@@ -78,18 +78,18 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 						}
 
 						appsCount++
-						app := NewConsumer(appsCount, connect, binding)
-						apps[i] = app
+						app := NewConsumer(appsCount, amqpConnection, binding)
+						consumerApps[i] = app
 					}
-					s.connections[config.URI] = connect
-					s.consumers[config.URI] = apps
+					s.amqpConnections[config.URI] = amqpConnection
+					s.consumers[config.URI] = consumerApps
 					// слушаем закрытие соединения
-					s.reconnect(connect, config)
+					s.reconnect(amqpConnection, config)
 				} else {
 					logger.FailExit("consumer service can't get channel to %s, error - %v", config.URI, err)
 				}
 			} else {
-				logger.FailExit("consumer service can't connect to %s, error - %v", config.URI, err)
+				logger.FailExit("consumer service can't create amqpConnection to %s, error - %v", config.URI, err)
 			}
 		}
 	} else {
@@ -107,15 +107,15 @@ func (s *Service) reconnect(connect *amqp.Connection, config *Config) {
 func (s *Service) notifyCloseError(config *Config, closeErrors chan *amqp.Error) {
 	for closeError := range closeErrors {
 		logger.Warn("consumer service close connection %s with error - %v, restart...", config.URI, closeError)
-		connect, err := amqp.Dial(config.URI)
+		amqpConnection, err := amqp.Dial(config.URI)
 		if err == nil {
-			s.connections[config.URI] = connect
+			s.amqpConnections[config.URI] = amqpConnection
 			closeErrors = nil
-			if apps, ok := s.consumers[config.URI]; ok {
-				for _, app := range apps {
-					app.connect = connect
+			if consumerApps, ok := s.consumers[config.URI]; ok {
+				for _, app := range consumerApps {
+					app.amqpConnection = amqpConnection
 				}
-				s.reconnect(connect, config)
+				s.reconnect(amqpConnection, config)
 			}
 			logger.Debug("consumer service reconnect to amqp server %s", config.URI)
 		} else {
@@ -142,7 +142,7 @@ func (s *Service) runConsumers(apps []*Consumer) {
 // OnFinish останавливает получателей
 func (s *Service) OnFinish() {
 	logger.Debug("stop consumers...")
-	for _, connect := range s.connections {
+	for _, connect := range s.amqpConnections {
 		if connect != nil {
 			err := connect.Close()
 			if err != nil {

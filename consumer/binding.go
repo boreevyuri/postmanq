@@ -178,7 +178,7 @@ func (b *Binding) declare(channel *amqp.Channel) {
 	_, err = channel.QueueDeclare(
 		b.Queue,     // name of the queue
 		true,        // durable
-		false,       // delete when usused
+		false,       // delete when unused
 		false,       // exclusive
 		false,       // noWait
 		b.QueueArgs, // arguments
