@@ -350,9 +350,9 @@ func (c *Consumer) consumeAndPublishMessages(event *common.ApplicationEvent, gro
 				},
 			)
 			if err == nil {
-				delivery.Ack(true)
+				_ = delivery.Ack(true)
 			} else {
-				delivery.Nack(true, true)
+				_ = delivery.Nack(true, true)
 			}
 		}
 		group.Done()
