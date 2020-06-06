@@ -32,6 +32,11 @@ func (m *Mailer) sendMail(event *common.SendEvent) {
 	message := event.Message
 	if common.EmailRegexp.MatchString(message.Envelope) && common.EmailRegexp.MatchString(message.Recipient) {
 		m.signWithDKIM(message)
+		//if err := m.newSend(event); err != nil {
+		//	event.Client.Wait()
+		//	event.Queue.Push(event.Client)
+		//	common.ReturnMail(event, err)
+		//}
 		m.send(event)
 	} else {
 		var invalidAddressError = "511 service#%d can't send mail#%d, envelope or recipient is invalid"
@@ -62,6 +67,61 @@ func (m *Mailer) signWithDKIM(message *common.MailMessage) {
 	}
 }
 
+func (m *Mailer) newSend(event *common.SendEvent) error {
+	message := event.Message
+	worker := event.Client.Worker
+	mailerID := "mailer#" + string(m.id) + "-" + string(message.ID)
+
+	logger.Info(mailerID + " begin sending mail")
+	logger.Debug(mailerID+" receive SMTP client#%d", event.Client.ID)
+
+	event.Client.SetTimeout(common.App.Timeout().Mail)
+
+	if err := worker.Mail(message.Envelope); err != nil {
+		logger.Info(mailerID+" error after MAIL FROM: %+v", err)
+		return err
+	}
+
+	event.Client.SetTimeout(common.App.Timeout().Rcpt)
+
+	if err := worker.Rcpt(message.Recipient); err != nil {
+		logger.Info(mailerID+" error after RCPT TO: %+v", err)
+		return err
+	}
+
+	event.Client.SetTimeout(common.App.Timeout().Data)
+
+	wc, err := worker.Data()
+	if err != nil {
+		logger.Info(mailerID+" error after DATA: %+v", err)
+		return err
+	}
+
+	if _, err = fmt.Fprint(wc, message.Body); err != nil {
+		logger.Info(mailerID+" error during body send: %+v", err)
+		return err
+	}
+
+	if err = wc.Close(); err != nil {
+		logger.Info(mailerID+" error after sent data: %+v", err)
+		return err
+	}
+
+	logger.Info(mailerID+" success sent mail for %s", message.Recipient)
+	event.Result <- common.SuccessSendEventResult
+
+	if err = worker.Reset(); err != nil {
+		logger.Info(mailerID+" error after RSET. Error:%+v", err)
+		return err
+	}
+
+	//Отпускаем SMTPClient в очередь
+	event.Client.Wait()
+	event.Queue.Push(event.Client)
+
+	return nil
+}
+
 // send отправляет письмо.
 func (m *Mailer) send(event *common.SendEvent) {
 	message := event.Message
@@ -74,29 +134,23 @@ func (m *Mailer) send(event *common.SendEvent) {
 
 	var sendErr error = nil
 
-	smtpLogMessage := "mailer#%d-%d sent command %s %s"
-	mailFrom := "MAIL FROM:"
-	rcptTo := "RCPT TO:"
-	dataCommand := "DATA"
-	rsetCommand := "RSET"
-
 	event.Client.SetTimeout(common.App.Timeout().Mail)
 
 	err := worker.Mail(message.Envelope)
 	if err == nil {
-		logger.Debug(smtpLogMessage, m.id, message.ID, mailFrom, message.Envelope)
+		logger.Debug("mailer#%d-%d sent command MAIL FROM: %s", m.id, message.ID, message.Envelope)
 
 		event.Client.SetTimeout(common.App.Timeout().Rcpt)
 
 		err = worker.Rcpt(message.Recipient)
 		if err == nil {
-			logger.Debug(smtpLogMessage, m.id, message.ID, rcptTo, message.Recipient)
+			logger.Debug("mailer#%d-%d sent command RCPT TO: %s", m.id, message.ID, message.Recipient)
 
 			event.Client.SetTimeout(common.App.Timeout().Data)
 
 			wc, err := worker.Data()
 			if err == nil {
-				logger.Debug(smtpLogMessage, m.id, message.ID, dataCommand)
+				logger.Debug("mailer#%d-%d sent command DATA", m.id, message.ID)
 
 				_, err = fmt.Fprint(wc, message.Body)
 				if err == nil {
@@ -108,7 +162,7 @@ func (m *Mailer) send(event *common.SendEvent) {
 						// Успешная отправка. Не закрываем соединение, но отсылаем RSET.
 						err = worker.Reset()
 						if err == nil {
-							logger.Debug(smtpLogMessage, m.id, message.ID, rsetCommand)
+							logger.Debug("mailer#%d-%d sent command RSET", m.id, message.ID)
 							logger.Info("mailer#%d-%d success send mail for %s", m.id, message.ID, message.Recipient)
 
 							success = true
