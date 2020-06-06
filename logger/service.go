@@ -2,13 +2,13 @@ package logger
 
 import (
 	"github.com/boreevyuri/postmanq/common"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
-// Level уровень логирования
+// Level уровень логирования.
 type Level int
 
-// уровни логирования
+// уровни логирования.
 const (
 	DebugLevel Level = iota
 	InfoLevel
@@ -16,7 +16,7 @@ const (
 	ErrorLevel
 )
 
-// название уровней логирования
+// название уровней логирования.
 const (
 	DebugLevelName   = "debug"
 	InfoLevelName    = "info"
@@ -45,7 +45,7 @@ var (
 	service  *Service
 )
 
-// Message запись логирования
+// Message запись логирования.
 type Message struct {
 	// сообщение для лога, может содержать параметры
 	Message string
@@ -57,16 +57,17 @@ type Message struct {
 	Args []interface{}
 }
 
-// NewMessage создание новой записи логирования
+// NewMessage создание новой записи логирования.
 func NewMessage(level Level, message string, args ...interface{}) *Message {
 	logMessage := new(Message)
 	logMessage.Level = level
 	logMessage.Message = message
 	logMessage.Args = args
+
 	return logMessage
 }
 
-// Service сервис логирования
+// Service сервис логирования.
 type Service struct {
 	// название уровня логирования, устанавливается в конфиге
 	LevelName string `yaml:"logLevel"`
@@ -84,18 +85,19 @@ type Service struct {
 	messages chan *Message
 }
 
-// Inst создает новый сервис логирования
+// Inst создает новый сервис логирования.
 func Inst() common.SendingService {
 	if service == nil {
 		service = new(Service)
 		// запускаем запись логов в отдельном потоке
 		writers.init()
-		writers.write()
+		writers.run()
 	}
+
 	return service
 }
 
-// OnInit инициализирует сервис логирования
+// OnInit инициализирует сервис логирования.
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
@@ -104,24 +106,25 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 		if existsLevel, ok := logLevelByName[s.LevelName]; ok {
 			level = existsLevel
 		}
+
 		messages = make(chan *Message)
 		// заново инициализируем вывод для логов
 		writers.init()
-		writers.write()
+		writers.run()
 	} else {
 		FailExitWithErr(err)
 	}
 }
 
-// OnRun ничего не делает, писатели логов уже пишут. Заглушка
+// OnRun ничего не делает, писатели логов уже пишут. Заглушка.
 func (s *Service) OnRun() {}
 
-// Events не участвует в отправке писем. Заглушка
+// Events не участвует в отправке писем. Заглушка.
 func (s *Service) Events() chan *common.SendEvent {
 	return nil
 }
 
-// OnFinish закрывает канал логирования
+// OnFinish закрывает канал логирования.
 func (s *Service) OnFinish() {
 	close(messages)
 }

@@ -2,7 +2,7 @@ package common
 
 import "time"
 
-// ApplicationEventKind тип события приложения
+// ApplicationEventKind тип события приложения.
 type ApplicationEventKind int
 
 const (
@@ -16,7 +16,7 @@ const (
 	FinishApplicationEventKind
 )
 
-// ApplicationEvent событие приложения
+// ApplicationEvent событие приложения.
 type ApplicationEvent struct {
 	// тип события
 	Kind ApplicationEventKind
@@ -28,27 +28,27 @@ type ApplicationEvent struct {
 	Args map[string]interface{}
 }
 
-// GetBoolArg возвращает аргумент, как булевый тип
+// GetBoolArg возвращает аргумент, как булевый тип.
 func (e *ApplicationEvent) GetBoolArg(key string) bool {
 	return e.Args[key].(bool)
 }
 
-// GetIntArg возвращает аргумент, как число
+// GetIntArg возвращает аргумент, как число.
 func (e *ApplicationEvent) GetIntArg(key string) int {
 	return e.Args[key].(int)
 }
 
-// GetStringArg возвращает аргумент, как строку
+// GetStringArg возвращает аргумент, как строку.
 func (e *ApplicationEvent) GetStringArg(key string) string {
 	return e.Args[key].(string)
 }
 
-// NewApplicationEvent создает событие с указанным типом
+// NewApplicationEvent создает событие с указанным типом.
 func NewApplicationEvent(kind ApplicationEventKind) *ApplicationEvent {
 	return &ApplicationEvent{Kind: kind}
 }
 
-// SendEventResult результат отправки письма
+// SendEventResult результат отправки письма.
 type SendEventResult int
 
 const (
@@ -68,7 +68,7 @@ const (
 	RevokeSendEventResult
 )
 
-// SendEvent событие отправки письма
+// SendEvent событие отправки письма.
 type SendEvent struct {
 	// клиент для отправки писем
 	Client *SMTPClient
@@ -92,12 +92,13 @@ type SendEvent struct {
 	Queue *LimitedQueue
 }
 
-// NewSendEvent создает событие отправки сообщения
+// NewSendEvent создает событие отправки сообщения.
 func NewSendEvent(message *MailMessage) *SendEvent {
 	event := new(SendEvent)
 	event.Message = message
 	event.CreateDate = time.Now()
 	event.Result = make(chan SendEventResult)
 	event.Iterator = NewIterator(Services)
+
 	return event
 }

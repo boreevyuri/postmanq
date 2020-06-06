@@ -7,7 +7,7 @@ import (
 
 	"github.com/boreevyuri/postmanq/common"
 	"github.com/boreevyuri/postmanq/logger"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -32,11 +32,11 @@ var (
 	}
 )
 
-// Service сервис, управляющий соединениями к почтовым сервисам
-// письма могут отсылаться в несколько потоков, почтовый сервис может разрешить несколько подключений с одного IP
-// количество подключений может быть не равно количеству отсылающих потоков
-// если доверить управление подключениями отправляющим потокам, тогда это затруднит общее управление подключениями
-// поэтому создание подключений и предоставление имеющихся подключений отправляющим потокам вынесено в отдельный сервис
+// Service сервис, управляющий соединениями к почтовым сервисам.
+// Письма могут отсылаться в несколько потоков, почтовый сервис может разрешить несколько подключений с одного IP,
+// количество подключений может быть не равно количеству отсылающих потоков.
+// Если доверить управление подключениями отправляющим потокам, тогда это затруднит общее управление подключениями,
+// поэтому создание подключений и предоставление имеющихся подключений отправляющим потокам вынесено в отдельный сервис.
 type Service struct {
 	// количество горутин устанавливающих соединения к почтовым сервисам
 	ConnectorsCount int `yaml:"workers"`
@@ -60,25 +60,28 @@ type Service struct {
 
 	certs []tls.Certificate
 
-	config *tls.Config
+	// unused
+	//config *tls.Config
 }
 
-// Inst создает новый сервис соединений
+// Inst создает новый сервис соединений.
 func Inst() *Service {
 	if service == nil {
 		service = new(Service)
 	}
+
 	return service
 }
 
-// OnInit инициализирует сервис соединений
+// OnInit инициализирует сервис соединений.
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
 		// Load client cert
 		cert, err := tls.LoadX509KeyPair(s.CertFilename, s.PrivateKeyFilename)
 		if err != nil {
-			logger.FailExit("connection service can't load cert from %s and %s, error - %v", s.CertFilename, s.PrivateKeyFilename, err)
+			logger.FailExit("connection service can't load cert from %s and %s, error - %v",
+				s.CertFilename, s.PrivateKeyFilename, err)
 		}
 
 		// Load CA cert
@@ -86,6 +89,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 		if err != nil {
 			logger.FailExit("connection service can't read cert %s, error - %v", s.CertFilename, err)
 		}
+
 		s.pool = x509.NewCertPool()
 		s.pool.AppendCertsFromPEM(caCert)
 		s.certs = []tls.Certificate{cert}
@@ -94,9 +98,11 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 		if s.addressesLen == 0 {
 			logger.FailExit("ips should be defined")
 		}
+
 		if s.Domain == common.InvalidInputString {
 			logger.FailExit("domain should be defined")
 		}
+
 		if s.ConnectorsCount <= 0 {
 			s.ConnectorsCount = common.DefaultWorkersCount
 		}
@@ -105,7 +111,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// OnRun запускает горутины
+// OnRun запускает горутины.
 func (s *Service) OnRun() {
 	for i := 0; i < s.ConnectorsCount; i++ {
 		id := i + 1
@@ -115,12 +121,12 @@ func (s *Service) OnRun() {
 	}
 }
 
-// Events канал для приема событий отправки писем
+// Events канал для приема событий отправки писем.
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// OnFinish завершает работу сервиса соединений
+// OnFinish завершает работу сервиса соединений.
 func (s *Service) OnFinish() {
 	close(events)
 }
@@ -135,10 +141,11 @@ func (s *Service) getConf(hostname string) *tls.Config {
 		ClientCAs:              s.pool,
 		Certificates:           s.certs,
 	}
+
 	return conf
 }
 
-// ConnectionEvent событие создания соединения
+// ConnectionEvent событие создания соединения.
 type ConnectionEvent struct {
 	*common.SendEvent
 
@@ -155,5 +162,5 @@ type ConnectionEvent struct {
 	address string
 
 	// Маскимальное количество команд, отправленные в одно соединение (спасибо Mail.ru)
-	maxSMTPCommands int
+	//maxSMTPCommands int
 }

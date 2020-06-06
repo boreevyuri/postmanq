@@ -3,7 +3,7 @@ package guardian
 import (
 	"github.com/boreevyuri/postmanq/common"
 	"github.com/boreevyuri/postmanq/logger"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 	events = make(chan *common.SendEvent)
 )
 
-// Service сервис, блокирующий отправку писем
+// Service сервис, блокирующий отправку писем.
 type Service struct {
 	// хосты, на которые блокируется отправка писем
 	Hostnames []string `yaml:"exclude"`
@@ -26,17 +26,19 @@ type Service struct {
 	GuardiansCount int `yaml:"workers"`
 }
 
-// Inst создает новый сервис блокировок
+// Inst создает новый сервис блокировок.
 func Inst() common.SendingService {
 	if service == nil {
 		service = new(Service)
 	}
+
 	return service
 }
 
-// OnInit инициализирует сервис блокировок
+// OnInit инициализирует сервис блокировок.
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	logger.Debug("init guardians...")
+
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
 		s.hostnameLen = len(s.Hostnames)
@@ -48,19 +50,19 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// OnRun запускает горутины
+// OnRun запускает горутины.
 func (s *Service) OnRun() {
 	for i := 0; i < s.GuardiansCount; i++ {
 		go newGuardian(i + 1)
 	}
 }
 
-// Events канал для приема событий отправки писем
+// Events канал для приема событий отправки писем.
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// OnFinish завершает работу сервиса соединений
+// OnFinish завершает работу сервиса соединений.
 func (s *Service) OnFinish() {
 	close(events)
 }

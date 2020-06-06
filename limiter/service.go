@@ -5,7 +5,7 @@ import (
 
 	"github.com/boreevyuri/postmanq/common"
 	"github.com/boreevyuri/postmanq/logger"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	events = make(chan *common.SendEvent)
 )
 
-// Service сервис ограничений, следит за тем, чтобы почтовым сервисам не отправилось больше писем, чем нужно
+// Service сервис ограничений, следит за тем, чтобы почтовым сервисам не отправилось больше писем, чем нужно.
 type Service struct {
 	// количество горутин проверяющих количество отправленных писем
 	LimitersCount int `yaml:"workers"`
@@ -28,19 +28,21 @@ type Service struct {
 	Limits map[string]*Limit `yaml:"limits"`
 }
 
-// Inst создает сервис ограничений
+// Inst создает сервис ограничений (limiter).
 func Inst() common.SendingService {
 	if service == nil {
 		service = new(Service)
 		service.Limits = make(map[string]*Limit)
 		ticker = time.NewTicker(time.Second)
 	}
+
 	return service
 }
 
-// OnInit инициализирует сервис
+// OnInit инициализирует сервис limiter.
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	logger.Debug("init limits...")
+
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
 		// инициализируем ограничения
@@ -48,6 +50,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 			limit.init()
 			logger.Debug("create limit for %s with type %v and duration %v", host, limit.bindingType, limit.duration)
 		}
+
 		if s.LimitersCount == 0 {
 			s.LimitersCount = common.DefaultWorkersCount
 		}
@@ -56,21 +59,22 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// OnRun запускает проверку ограничений и очистку значений лимитов
+// OnRun запускает проверку ограничений и очистку значений лимитов.
 func (s *Service) OnRun() {
 	// сразу запускаем проверку значений ограничений
 	go newCleaner()
+
 	for i := 0; i < s.LimitersCount; i++ {
 		go newLimiter(i + 1)
 	}
 }
 
-// Events канал для приема событий отправки писем
+// Events канал для приема событий отправки писем.
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// OnFinish завершает работу сервиса соединений
+// OnFinish завершает работу сервиса соединений.
 func (s *Service) OnFinish() {
 	close(events)
 }
