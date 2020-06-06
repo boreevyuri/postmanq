@@ -20,7 +20,7 @@ var (
 	EmailRegexp = regexp.MustCompile(`^[\w\d\.\_\%\+\-]+@([\w\d\.\-]+\.\w{2,4})$`)
 )
 
-// Timeout таймауты приложения
+// Timeout таймауты приложения.
 type Timeout struct {
 	Sleep      time.Duration `yaml:"sleep"`
 	Waiting    time.Duration `yaml:"waiting"`
@@ -31,32 +31,38 @@ type Timeout struct {
 	Data       time.Duration `yaml:"data"`
 }
 
-// Init инициализирует значения таймаутов по умолчанию
+// Init инициализирует значения таймаутов по умолчанию.
 func (t *Timeout) Init() {
 	if t.Sleep == 0 {
 		t.Sleep = time.Second
 	}
+
 	if t.Waiting == 0 {
 		t.Waiting = 30 * time.Second
 	}
+
 	if t.Connection == 0 {
 		t.Connection = 5 * time.Minute
 	}
+
 	if t.Hello == 0 {
 		t.Hello = 5 * time.Minute
 	}
+
 	if t.Mail == 0 {
 		t.Mail = 5 * time.Minute
 	}
+
 	if t.Rcpt == 0 {
 		t.Rcpt = 5 * time.Minute
 	}
+
 	if t.Data == 0 {
 		t.Data = 10 * time.Minute
 	}
 }
 
-// DelayedBindingType тип отложенной очереди
+// DelayedBindingType тип отложенной очереди.
 type DelayedBindingType int
 
 const (
@@ -90,7 +96,7 @@ const (
 	NotSendDelayedBinding
 )
 
-// MailError ошибка во время отпрвки письма
+// MailError ошибка во время отпрвки письма.
 type MailError struct {
 	// сообщение об ошибке
 	Message string `json:"message"`
@@ -99,7 +105,7 @@ type MailError struct {
 	Code int `json:"code"`
 }
 
-// MailMessage письмо
+// MailMessage письмо.
 type MailMessage struct {
 	// идентификатор для логов
 	ID int64 `json:"-"`
@@ -132,35 +138,39 @@ type MailMessage struct {
 	TrySendingCount int `json:"trySendingCount"`
 }
 
-// Init инициализирует письмо
+// Init инициализирует письмо.
 func (m *MailMessage) Init() {
 	m.ID = time.Now().UnixNano()
 	m.TrySendingCount++
 	m.CreatedDate = time.Now()
+
 	if hostname, err := m.getHostnameFromEmail(m.Envelope); err == nil {
 		m.HostnameFrom = hostname
 	}
+
 	if hostname, err := m.getHostnameFromEmail(m.Recipient); err == nil {
 		m.HostnameTo = hostname
 	}
 }
 
-// получает домен из адреса "user@domain"
+// получает домен из адреса "user@domain".
 func (m *MailMessage) getHostnameFromEmail(email string) (string, error) {
 	matches := EmailRegexp.FindAllStringSubmatch(email, -1)
 	if len(matches) == 1 && len(matches[0]) == 2 {
 		return matches[0][1], nil
 	}
+
 	return "", errors.New("invalid email address")
 }
 
-// ReturnMail возвращает письмо обратно в очередь после ошибки во время отправки
+// ReturnMail возвращает письмо обратно в очередь после ошибки во время отправки.
 func ReturnMail(event *SendEvent, err error) {
 	// необходимо проверить сообщение на наличие кода ошибки
 	// обычно код идет первым
 	if err != nil {
 		errorMessage := err.Error()
 		parts := strings.Split(errorMessage, " ")
+
 		if len(parts) > 0 {
 			// пытаемся получить код
 			code, e := strconv.Atoi(strings.TrimSpace(parts[0]))

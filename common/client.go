@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// SMTPClientStatus статус клиента почтового сервера
+// SMTPClientStatus статус клиента почтового сервера.
 type SMTPClientStatus int
 
 const (
@@ -20,7 +20,7 @@ const (
 	DisconnectedSMTPClientStatus
 )
 
-// SMTPClient клиент почтового сервера
+// SMTPClient клиент почтового сервера.
 type SMTPClient struct {
 	// идентификатор клиента для удобства в логах
 	ID int
@@ -41,32 +41,32 @@ type SMTPClient struct {
 	timer *time.Timer
 }
 
-// SetTimeout устанавливайт таймаут на чтение и запись соединения
+// SetTimeout устанавливайт таймаут на чтение и запись соединения.
 func (s *SMTPClient) SetTimeout(timeout time.Duration) {
-	s.Conn.SetDeadline(time.Now().Add(timeout))
+	_ = s.Conn.SetDeadline(time.Now().Add(timeout))
 }
 
 // Close принудительно закрывает соединение
-// mail.ru обрывает соединение со своей стороны, получаем broken pipe
+// mail.ru обрывает соединение со своей стороны, получаем broken pipe.
 func (s *SMTPClient) Close() {
 	s.Status = DisconnectedSMTPClientStatus
-	s.Worker.Close()
+	_ = s.Worker.Close()
 	s.timer = nil
 }
 
 // Wait переводит клиента в ожидание
-// после окончания ожидания соединение разрывается, а статус меняется на отсоединенный
+// после окончания ожидания соединение разрывается, а статус меняется на отсоединенный.
 func (s *SMTPClient) Wait() {
 	s.Status = WaitingSMTPClientStatus
 	s.timer = time.AfterFunc(App.Timeout().Waiting, func() {
 		s.Status = DisconnectedSMTPClientStatus
-		s.Worker.Close()
+		_ = s.Worker.Close()
 		s.timer = nil
 	})
 }
 
 // Wakeup переводит клиента в рабочее состояние
-// если клиент был в ожидании, ожидание прерывается
+// если клиент был в ожидании, ожидание прерывается.
 func (s *SMTPClient) Wakeup() {
 	s.Status = WorkingSMTPClientStatus
 	if s.timer != nil {

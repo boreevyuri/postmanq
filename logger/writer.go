@@ -9,42 +9,44 @@ import (
 	"github.com/boreevyuri/postmanq/common"
 )
 
-// Writer автор логов
+// Writer писатель логов.
 type Writer interface {
 	writeString(string)
 }
 
-// StdoutWriter автор логов пишущий в стандартный вывод
+// StdoutWriter писатель логов пишущий в стандартный вывод.
 type StdoutWriter struct{}
 
-// writeString пишет логи в стандартный вывод
+// writeString пишет логи в стандартный вывод.
 func (s *StdoutWriter) writeString(str string) {
-	os.Stdout.WriteString(str)
+	_, _ = os.Stdout.WriteString(str)
 }
 
-// FileWriter автор логов пишущий в файл
+// FileWriter писатель логов в файл.
 type FileWriter struct {
 	filename string
 }
 
-// writeString пишет логи в файл
+// writeString пишет логи в файл.
 func (fw *FileWriter) writeString(str string) {
-	f, err := os.OpenFile(fw.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	file, err := os.OpenFile(fw.filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err == nil {
-		_, err = f.WriteString(str)
-		f.Close()
+		_, _ = file.WriteString(str)
+
+		// TODO: обработать ошибку Close
+		file.Close()
 	}
 }
 
-// Writers писатели логов
+// Writers массив писателей логов.
 type Writers []Writer
 
-// количество писателей
+// количество писателей.
 func (w Writers) len() int {
 	return len(w)
 }
 
-// init инициализирует писателей логов
+// init инициализирует писателей логов.
 func (w *Writers) init() {
 	for i := 0; i < w.len(); i++ {
 		if common.FilenameRegex.MatchString(service.Output) { // проверяем получили ли из настроек имя файла
@@ -62,19 +64,19 @@ func (w *Writers) init() {
 	}
 }
 
-// set добавляет писателя в список
+// set добавляет писателя в список.
 func (w *Writers) set(i int, writer Writer) {
 	(*w)[i] = writer
 }
 
-// write запускает писателей
-func (w Writers) write() {
+// run запускает писателей.
+func (w Writers) run() {
 	for _, writer := range w {
 		go w.listenMessages(writer)
 	}
 }
 
-// listenMessages подписывает писателей на получение сообщений для логирования
+// listenMessages подписывает писателей на получение сообщений для логирования.
 func (w *Writers) listenMessages(writer Writer) {
 	for message := range messages {
 		w.writeMessage(writer, message, time.Now().Format(time.StampMicro))

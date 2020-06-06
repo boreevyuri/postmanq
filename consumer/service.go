@@ -8,7 +8,7 @@ import (
 	"github.com/boreevyuri/postmanq/common"
 	"github.com/boreevyuri/postmanq/logger"
 	"github.com/streadway/amqp"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	events = make(chan *common.SendEvent)
 )
 
-// Service сервис получения сообщений
+// Service сервис получения сообщений.
 type Service struct {
 	// настройка подписчиков на сообщения
 	Configs []*Config `yaml:"consumers"`
@@ -31,30 +31,34 @@ type Service struct {
 	consumers map[string][]*Consumer
 }
 
-// Inst создает новый сервис получения сообщений
+// Inst создает новый сервис получения сообщений.
 func Inst() common.SendingService {
 	if service == nil {
 		service := new(Service)
 		service.amqpConnections = make(map[string]*amqp.Connection)
 		service.consumers = make(map[string][]*Consumer)
+
 		return service
 	}
+
 	return service
 }
 
-// OnInit инициализирует сервис
+// OnInit инициализирует сервис.
 func (s *Service) OnInit(event *common.ApplicationEvent) {
 	logger.Debug("init consumer service")
 	// получаем настройки
 	err := yaml.Unmarshal(event.Data, s)
 	if err == nil {
 		appsCount := 0
+
 		for _, config := range s.Configs {
 			amqpConnection, err := amqp.Dial(config.URI)
 			if err == nil {
 				channel, err := amqpConnection.Channel()
 				if err == nil {
 					consumerApps := make([]*Consumer, len(config.Bindings))
+
 					for i, binding := range config.Bindings {
 						binding.init()
 						// объявляем очередь
@@ -68,6 +72,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 						}
 
 						binding.failureBindings = make(map[FailureBindingType]*Binding)
+
 						for failureBindingType, tplName := range failureBindingTypeTplNames {
 							failureBinding := new(Binding)
 							failureBinding.Exchange = fmt.Sprintf(tplName, binding.Exchange)
@@ -81,6 +86,7 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 						app := NewConsumer(appsCount, amqpConnection, binding)
 						consumerApps[i] = app
 					}
+
 					s.amqpConnections[config.URI] = amqpConnection
 					s.consumers[config.URI] = consumerApps
 					// слушаем закрытие соединения
@@ -97,20 +103,25 @@ func (s *Service) OnInit(event *common.ApplicationEvent) {
 	}
 }
 
-// объявляет слушателя закрытия соединения
+// объявляет слушателя закрытия соединения.
 func (s *Service) reconnect(connect *amqp.Connection, config *Config) {
 	closeErrors := connect.NotifyClose(make(chan *amqp.Error))
 	go s.notifyCloseError(config, closeErrors)
 }
 
-// слушает закрытие соединения
+// слушает закрытие соединения.
 func (s *Service) notifyCloseError(config *Config, closeErrors chan *amqp.Error) {
 	for closeError := range closeErrors {
 		logger.Warn("consumer service close connection %s with error - %v, restart...", config.URI, closeError)
 		amqpConnection, err := amqp.Dial(config.URI)
-		if err == nil {
+
+		if err != nil {
+			logger.Warn("consumer service can't reconnect to amqp server %s with error - %v", config.URI, err)
+		} else {
 			s.amqpConnections[config.URI] = amqpConnection
+			// TODO: wtf?
 			closeErrors = nil
+
 			if consumerApps, ok := s.consumers[config.URI]; ok {
 				for _, app := range consumerApps {
 					app.amqpConnection = amqpConnection
@@ -118,30 +129,30 @@ func (s *Service) notifyCloseError(config *Config, closeErrors chan *amqp.Error)
 				s.reconnect(amqpConnection, config)
 			}
 			logger.Debug("consumer service reconnect to amqp server %s", config.URI)
-		} else {
-			logger.Warn("consumer service can't reconnect to amqp server %s with error - %v", config.URI, err)
 		}
 	}
 }
 
-// OnRun запускает сервис
+// OnRun запускает сервис.
 func (s *Service) OnRun() {
 	logger.Debug("run consumers...")
+
 	for _, apps := range s.consumers {
 		s.runConsumers(apps)
 	}
 }
 
-// запускает получателей
+// запускает получателей.
 func (s *Service) runConsumers(apps []*Consumer) {
 	for _, app := range apps {
 		go app.run()
 	}
 }
 
-// OnFinish останавливает получателей
+// OnFinish останавливает получателей.
 func (s *Service) OnFinish() {
 	logger.Debug("stop consumers...")
+
 	for _, connect := range s.amqpConnections {
 		if connect != nil {
 			err := connect.Close()
@@ -150,26 +161,30 @@ func (s *Service) OnFinish() {
 			}
 		}
 	}
+
 	close(events)
 }
 
-// Events канал для приема событий отправки писем
+// Events канал для приема событий отправки писем.
 func (s *Service) Events() chan *common.SendEvent {
 	return events
 }
 
-// OnShowReport запускает получение сообщений с ошибками и пересылает их другому сервису
+// OnShowReport запускает получение сообщений с ошибками и пересылает их другому сервису.
 func (s *Service) OnShowReport() {
 	waiter := newWaiter()
 	group := new(sync.WaitGroup)
 
 	var delta int
+
 	for _, apps := range s.consumers {
 		for _, app := range apps {
 			delta += app.binding.Handlers
 		}
 	}
+
 	group.Add(delta)
+
 	for _, apps := range s.consumers {
 		go func() {
 			for _, app := range apps {
@@ -179,6 +194,7 @@ func (s *Service) OnShowReport() {
 			}
 		}()
 	}
+
 	group.Wait()
 	waiter.Stop()
 
@@ -186,12 +202,14 @@ func (s *Service) OnShowReport() {
 	sendEvent.Iterator.Next().(common.ReportService).Events() <- sendEvent
 }
 
-// OnPublish перекладывает сообщения из очереди в очередь
+// OnPublish перекладывает сообщения из очереди в очередь.
 func (s *Service) OnPublish(event *common.ApplicationEvent) {
 	group := new(sync.WaitGroup)
 	delta := 0
+
 	for uri, apps := range s.consumers {
 		var necessaryPublish bool
+
 		if len(event.GetStringArg("host")) > 0 {
 			parsedURI, err := url.Parse(uri)
 			if err == nil && parsedURI.Host == event.GetStringArg("host") {
@@ -202,22 +220,25 @@ func (s *Service) OnPublish(event *common.ApplicationEvent) {
 		} else {
 			necessaryPublish = true
 		}
+
 		if necessaryPublish {
 			for _, app := range apps {
 				delta += app.binding.Handlers
+
 				for i := 0; i < app.binding.Handlers; i++ {
 					go app.consumeAndPublishMessages(event, group)
 				}
 			}
 		}
 	}
+
 	group.Add(delta)
 	group.Wait()
 	fmt.Println("done")
 	common.App.Events() <- common.NewApplicationEvent(common.FinishApplicationEventKind)
 }
 
-// Config получатель сообщений из очереди
+// Config получатель сообщений из очереди.
 type Config struct {
 	URI      string     `yaml:"uri"`
 	Bindings []*Binding `yaml:"bindings"`

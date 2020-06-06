@@ -15,45 +15,51 @@ var (
 	connectorEvents = make(chan *ConnectionEvent)
 )
 
-// Connector устанавливает соединение к почтовому сервису
+// Connector устанавливает соединение к почтовому сервису.
 type Connector struct {
 	// Идентификатор коннектора (для лога)
 	id int
 }
 
-// создает и запускает новый соединитель
+// создает и запускает новый коннектор.
 func newConnector(id int) {
 	connector := &Connector{id}
 	connector.run()
 }
 
-// запускает прослушивание событий создания соединений
+// запускает прослушивание событий создания соединений.
 func (c *Connector) run() {
 	for event := range connectorEvents {
 		c.connect(event)
 	}
 }
 
-// устанавливает соединение к почтовому сервису
+// устанавливает соединение к почтовому сервису.
 func (c *Connector) connect(event *ConnectionEvent) {
 	logger.Debug("connector#%d-%d try to find existing connection", c.id, event.Message.ID)
+
 	goto receiveConnect
 
 receiveConnect:
 	event.TryCount++
+
 	var targetClient *common.SMTPClient
 	var smtpError error = nil
+
 	// смотрим все mx сервера почтового сервиса
 	for _, mxServer := range event.server.mxServers {
 		logger.Debug("connector#%d-%d try to receive connection for %s", c.id, event.Message.ID, mxServer.hostname)
 
 		// пробуем получить клиента из очереди
-		event.Queue, _ = mxServer.queues[event.address]
+		event.Queue = mxServer.queues[event.address]
 		client := event.Queue.Pop()
+
 		if client != nil {
 			targetClient = client.(*common.SMTPClient)
 			logger.Debug("connector#%d-%d found free SMTP client#%d", c.id, event.Message.ID, targetClient.ID)
-			logger.Debug("connector#%d-%d check connection to %s smtp client#%d", c.id, event.Message.ID, event.address, targetClient.ID)
+			logger.Debug("connector#%d-%d check connection to %s smtp client#%d",
+				c.id, event.Message.ID, event.address, targetClient.ID)
+
 			err := targetClient.Worker.Noop()
 			if err != nil {
 				logger.Debug("connector#%d-%d SMTPClient#%d is dead. Closing...", c.id, event.Message.ID, targetClient.ID)
@@ -109,7 +115,7 @@ waitConnect:
 	return
 }
 
-// создает соединение к почтовому сервису
+// создает соединение к почтовому сервису.
 // TODO: возвращать ошибку при неудачном создании клиента
 func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient) error {
 	// определяем IP, с которого будет устанавливаться соединение
@@ -130,6 +136,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 			logger.Debug("connector#%d-%d connect to %s", c.id, event.Message.ID, hostname)
 
 			_ = connection.SetDeadline(time.Now().Add(common.App.Timeout().Hello))
+
 			client, err := smtp.NewClient(connection, mxServer.hostname)
 			if err == nil {
 				logger.Debug("connector#%d-%d create client to %s", c.id, event.Message.ID, mxServer.hostname)
@@ -142,6 +149,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 					if mxServer.useTLS {
 						mxServer.useTLS, _ = client.Extension("STARTTLS")
 					}
+
 					logger.Debug("connector#%d-%d use TLS %v", c.id, event.Message.ID, mxServer.useTLS)
 
 					// создаем TLS или обычное соединение
@@ -178,7 +186,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 	return nil
 }
 
-// открывает защищенное соединение
+// открывает защищенное соединение.
 func (c *Connector) initTLSSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient, connection net.Conn, client *smtp.Client) {
 	// если есть какие данные о сертификате и к серверу можно создать TLS соединение
 	if mxServer.useTLS {
@@ -205,7 +213,7 @@ func (c *Connector) initTLSSMTPClient(mxServer *MxServer, event *ConnectionEvent
 	}
 }
 
-// создает или инициализирует клиента
+// создает или инициализирует клиента.
 func (c *Connector) initSMTPClient(mxServer *MxServer, event *ConnectionEvent, ptrSMTPClient **common.SMTPClient, connection net.Conn, client *smtp.Client) {
 	isNil := *ptrSMTPClient == nil
 	if isNil {
@@ -213,16 +221,19 @@ func (c *Connector) initSMTPClient(mxServer *MxServer, event *ConnectionEvent, p
 		for _, queue := range mxServer.queues {
 			count += queue.MaxLen()
 		}
+
 		*ptrSMTPClient = &common.SMTPClient{
 			ID: count + 1,
 		}
 		// увеличиваем максимальную длину очереди
 		event.Queue.AddMaxLen()
 	}
+
 	smtpClient := *ptrSMTPClient
 	smtpClient.Conn = connection
 	smtpClient.Worker = client
 	smtpClient.ModifyDate = time.Now()
+
 	if isNil {
 		logger.Debug("connector#%d-%d create smtp client#%d for %s", c.id, event.Message.ID, smtpClient.ID, mxServer.hostname)
 	} else {
