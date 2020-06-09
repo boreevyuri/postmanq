@@ -146,6 +146,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 					logger.Debug("connector#%d-%d send command HELO: %s", c.id, event.Message.ID, service.Domain)
 
 					// проверяем доступно ли TLS
+					// TODO: непонятный if
 					if mxServer.useTLS {
 						mxServer.useTLS, _ = client.Extension("STARTTLS")
 					}
@@ -153,6 +154,7 @@ func (c *Connector) createSMTPClient(mxServer *MxServer, event *ConnectionEvent,
 					logger.Debug("connector#%d-%d use TLS %v", c.id, event.Message.ID, mxServer.useTLS)
 
 					// создаем TLS или обычное соединение
+					// TODO: разобраться с этой фигней. В net/smtp есть свой StartTLS
 					if mxServer.useTLS {
 						c.initTLSSMTPClient(mxServer, event, ptrSMTPClient, connection, client)
 					} else {
